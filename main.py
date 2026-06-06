@@ -43,7 +43,7 @@ def main() -> None:
 
     # 5. Game loop (restart supported)
     while True:
-        engine = GameEngine(screen, participant, eeg=eeg, use_eeg=True)
+        engine = GameEngine(screen, participant, eeg=eeg)
         if not engine.run():
             break
 

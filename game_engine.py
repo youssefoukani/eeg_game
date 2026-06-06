@@ -24,17 +24,15 @@ class GameEngine:
 
     def __init__(self, screen: pygame.Surface,
                  participant: ParticipantData,
-                 eeg: EEGInterface | None = None,
-                 use_eeg: bool = False):
+                 eeg: EEGInterface | None = None):
         self._screen      = screen
         self._participant = participant
         self._eeg         = eeg or EEGInterface()
-        self._use_eeg     = use_eeg
         self._fonts       = make_fonts()
 
     def run(self) -> bool:
         # Initialise subsystems
-        input_mgr   = InputManager(self._eeg, use_eeg=self._use_eeg)
+        input_mgr   = InputManager(self._eeg)
         player      = PlayerController()
         obstacles   = ObstacleManager()
         collisions  = CollisionSystem()

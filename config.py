@@ -7,9 +7,8 @@ WINDOW_W, WINDOW_H = 520, 700
 FPS                = 60
 
 # Session timing
-MATCH_DURATION     = 120    # seconds (2 minutes)
-FIXATION_MIN       = 2.0    # seconds – minimum fixation cross duration
-FIXATION_MAX       = 5.0    # seconds – maximum fixation cross duration
+MATCH_DURATION     = 10    # seconds (2 minutes)
+CROSS_DURATION     = 2.0    # seconds – minimum fixation cross duration
 
 # Lane identifiers
 LANE_LEFT          = 0

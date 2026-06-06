@@ -47,7 +47,6 @@ def main() -> None:
         if not engine.run():
             break
 
-    eeg.disconnect()
     pygame.quit()
     sys.exit()
 

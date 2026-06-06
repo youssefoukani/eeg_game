@@ -8,12 +8,7 @@ import random
 
 import pygame
 
-from config import (
-    WINDOW_W, WINDOW_H, FPS, MATCH_DURATION,
-    OBSTACLE_TRAVEL_TIME, FIXATION_MIN, FIXATION_MAX,
-    C_BG, C_TEXT, C_MUTED, C_ACCENT, C_WARNING, C_OK, C_DIVIDER,
-    C_INPUT_BG, C_INPUT_ACTIVE, C_INPUT_BORDER, C_INPUT_SEL,
-)
+from config import *
 from models import ParticipantData
 from metrics_logger import MetricsLogger
 from eeg_interface import EEGInterface
@@ -201,76 +196,50 @@ UserDataForm.run = _patched_run
 
 class SignalQualityCheck:
     """
-    Shows OSC connection status and per-channel signal quality.
-    R = re-check,  SPACE = continue (researcher's decision).
+    Placeholder temporaneo per la schermata di controllo qualità del segnale EEG.
+    Premere SPAZIO per continuare e avviare la sessione.
     """
 
     def __init__(self, screen: pygame.Surface, eeg: EEGInterface):
-        self._screen    = screen
-        self._eeg       = eeg
-        self._fb, self._f, self._fs = make_fonts()
-        self._clock     = pygame.time.Clock()
-        self._connected = False
-        self._quality: dict[str, str] = {}
+        self._screen = screen
+        self._eeg    = eeg
+        # Inizializzazione font (usa le tue funzioni di helper, es. make_fonts o _fonts)
+        self._fb, self._f, self._fs = make_fonts() 
+        self._clock  = pygame.time.Clock()
 
     def run(self) -> None:
-        self._check()
+        # Avvia la connessione in background se l'interfaccia lo richiede
+        self._eeg.connect()
+        
         while True:
             self._draw()
             pygame.display.flip()
-            self._clock.tick(FPS)
+            
+            self._clock.tick(FPS) 
+            
             for ev in pygame.event.get():
-                _quit_on_escape(ev)
-                if ev.type == pygame.KEYDOWN:
-                    if ev.key == pygame.K_r:     self._check()
-                    elif ev.key == pygame.K_SPACE: return
-
-    def _check(self) -> None:
-        self._connected = self._eeg.connect()
-        self._quality   = self._eeg.get_signal_quality()
+                # Mantiene la funzione di chiusura globale con ESC
+                if ev.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif ev.type == pygame.KEYDOWN:
+                    if ev.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+                    # Premendo SPAZIO si supera il placeholder e si va alla croce di fissazione
+                    elif ev.key == pygame.K_SPACE: 
+                        return
 
     def _draw(self) -> None:
         s = self._screen
-        s.fill(C_BG)
-        center_text(s, "EEG SIGNAL QUALITY CHECK", self._fb, C_TEXT, 42)
-        center_text(s, "OSC UDP receiver", self._fs, C_MUTED, 70)
-        divider(s, 98)
-
-        # Connection dot + label
-        y        = 118
-        conn_col = C_OK if self._connected else C_WARNING
-        conn_lbl = "CONNECTED" if self._connected else "NOT CONNECTED"
-        pygame.draw.ellipse(s, conn_col, pygame.Rect(WINDOW_W // 2 - 120, y + 4, 10, 10))
-        s.blit(self._f.render(conn_lbl, True, conn_col), (WINDOW_W // 2 - 104, y))
-        y += 52
-
-        divider(s, y); y += 16
-
-        # Channel grid
-        center_text(s, "Channel Signal Quality", self._f, C_TEXT, y); y += 28
-        channels = self._eeg.CHANNELS
-        cols, cell_w, cell_h = 4, 100, 46
-        gx = WINDOW_W // 2 - (cols * cell_w) // 2
-
-        QUAL_BG  = {"GOOD": (20, 50, 30), "BAD": (60, 20, 20), "N/A": C_INPUT_BG}
-        QUAL_COL = {"GOOD": C_OK,         "BAD": C_WARNING,     "N/A": C_MUTED}
-
-        for idx, ch in enumerate(channels):
-            cx   = gx + (idx % cols) * cell_w
-            cy   = y  + (idx // cols) * cell_h
-            qual = self._quality.get(ch, "N/A")
-            br   = pygame.Rect(cx + 3, cy, cell_w - 6, cell_h - 6)
-            pygame.draw.rect(s, QUAL_BG.get(qual, C_INPUT_BG), br, border_radius=4)
-            pygame.draw.rect(s, C_INPUT_BORDER, br, 1, border_radius=4)
-            ch_s = self._fb.render(ch, True, C_TEXT)
-            q_s  = self._fs.render(qual, True, QUAL_COL.get(qual, C_MUTED))
-            s.blit(ch_s, (br.centerx - ch_s.get_width() // 2, br.y + 4))
-            s.blit(q_s,  (br.centerx - q_s.get_width()  // 2, br.y + 22))
-
-        y += (len(channels) // cols + bool(len(channels) % cols)) * cell_h + 16
-        divider(s, y); y += 20
-        center_text(s, "R  re-check    SPACE  continue", self._fs, C_ACCENT, y)
-
+        
+        s.fill(C_BG) 
+        
+        center_text(s, "SCHERMATA QUALITY CHECK", self._fb, C_TEXT, WINDOW_H // 2 - 40)
+        center_text(s, "[ Da implementare ]", self._f, C_WARNING, WINDOW_H // 2)
+        
+        center_text(s, "L'interfaccia OSC è attiva in background.", self._fs, C_MUTED, WINDOW_H // 2 + 60)
+        center_text(s, "Premere [ SPAZIO ] per continuare", self._fs, C_ACCENT, WINDOW_H // 2 + 120)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Screen 3 – Fixation Cross
@@ -278,7 +247,7 @@ class SignalQualityCheck:
 
 class FixationCross:
     """
-    Black screen with a white '+' for a random [FIXATION_MIN, FIXATION_MAX] s interval.
+    Black screen with a white '+' for a  [CROSS_DURATION] s interval.
     Establishes a resting-state EEG baseline before task onset.
     Duration is jittered to reduce temporal expectation.
     """
@@ -290,8 +259,7 @@ class FixationCross:
         self._font_hint  = pygame.font.SysFont("monospace", 13)
 
     def run(self) -> None:
-        duration = random.uniform(FIXATION_MIN, FIXATION_MAX)
-        deadline = time.time() + duration
+        deadline = time.time() + CROSS_DURATION
 
         while time.time() < deadline:
             for ev in pygame.event.get():

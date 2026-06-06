@@ -7,7 +7,6 @@
 #       /bci/prediction  "LEFT"  |  "RIGHT"  |  "NONE"
 #   - The server runs in a daemon thread; it is automatically killed when the
 #     main process exits.
-#   - Call connect() once before the game loop; disconnect() on exit.
 #
 # Timing contract:
 #   The game gives OBSTACLE_TRAVEL_TIME = 2.8 s from obstacle spawn to
@@ -66,20 +65,13 @@ class EEGInterface:
         with self._lock:
             return self._latest_prediction
 
-    def get_signal_quality(self) -> dict[str, str]:
-        """Return per-channel quality map used by SignalQualityCheck.
-        Returns GOOD for all channels while the OSC server is running."""
-        status = "GOOD" if self._connected else "N/A"
-        return {ch: status for ch in self.CHANNELS}
+    # def get_signal_quality(self) -> dict[str, str]:
+    #     """Return per-channel quality map used by SignalQualityCheck.
+    #     Returns GOOD for all channels while the OSC server is running."""
+    #     status = "GOOD" if self._connected else "N/A"
+    #     return {ch: status for ch in self.CHANNELS}
 
-    def disconnect(self):
-        """Shut down the OSC server cleanly."""
-        if self._server:
-            self._server.shutdown()
-            self._server.server_close()
-            print("[EEG] OSC server stopped.")
-        self._connected = False
-
+    
     # ── internal ──────────────────────────────────────────────────────────────
 
     def _handle_prediction(self, address: str, *args):

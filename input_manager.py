@@ -6,7 +6,6 @@
 # Hybrid mode (keyboard + EEG simultaneously):
 #   Both sources are always polled; EEG predictions take priority when present.
 
-import pygame
 from typing import Optional
 from eeg_interface import EEGInterface
 
@@ -18,7 +17,6 @@ class InputManager:
         self._pending: Optional[str] = None
 
     def poll(self, events: list) -> None:
-        
         # Legge l'ultima predizione OSC — non-blocking
         pred = self._eeg.get_prediction()
         if pred in ("LEFT", "RIGHT"):

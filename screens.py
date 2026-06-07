@@ -130,7 +130,7 @@ class UserDataForm:
             pygame.draw.rect(s, C_INPUT_ACTIVE if active else C_INPUT_BG, box, border_radius=4)
             pygame.draw.rect(s, C_ACCENT if active else C_INPUT_BORDER, box, 1, border_radius=4)
             cursor = "|" if active and int(time.time() * 2) % 2 == 0 else ""
-            s.blit(self._f.render(self._texts[key] + cursor, True, C_TEXT),
+            s.blit(self._font_medium.render(self._texts[key] + cursor, True, C_TEXT),
                    (box.x + 10, box.y + 8));  y += 50
 
         # Selector helper
@@ -332,7 +332,7 @@ class StartScreen:
             ("Controls",      "← Left Arrow    → Right Arrow"),
         ]:
             lbl_s = self._font_small.render(f"{label:<16}", True, C_MUTED)
-            val_s = self._f.render(val, True, C_TEXT)
+            val_s = self._font_medium.render(val, True, C_TEXT)
             s.blit(lbl_s, (80, y))
             s.blit(val_s, (80 + lbl_s.get_width(), y)); y += 28
 

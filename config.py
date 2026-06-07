@@ -1,50 +1,40 @@
 # ─── config.py ────────────────────────────────────────────────────────────────
-# All tunable constants for the EEG BCI Runner.
-# Change values here; nothing else needs to be touched.
 import pygame
 pygame.init()
-# Window
-info = pygame.display.Info()
-WINDOW_W = info.current_w
-WINDOW_H = info.current_h
 
-FPS                = 60
+_info      = pygame.display.Info()
+WINDOW_W   = _info.current_w
+WINDOW_H   = _info.current_h
+FPS        = 60
 
-# Session timing
-MATCH_DURATION     = 60    # seconds (2 minutes)
-CROSS_DURATION     = 2.0    # seconds – minimum fixation cross duration
+# Session
+MATCH_DURATION   = 60    # seconds
+CROSS_DURATION   = 2.0   # seconds
 
-# Lane identifiers
-LANE_LEFT          = 0
-LANE_RIGHT         = 1
+# Lanes
+LANE_LEFT  = 0
+LANE_RIGHT = 1
 
 # Obstacle timing
-# Must be ≥ 2 s to cover EEG epoch + preprocessing + inference latency.
-# Breakdown: ~2.0 s epoch | ~0.3 s filter | ~0.1 s inference | ~0.4 s margin
-OBSTACLE_TRAVEL_TIME = 8  # seconds from spawn to collision line
-SPAWN_MIN            = 6  # seconds between obstacles (min)
-SPAWN_MAX            = 8  # seconds between obstacles (max)
+OBSTACLE_TRAVEL_TIME = 8   # seconds spawn → collision
+SPAWN_MIN            = 6   # seconds between obstacles
+SPAWN_MAX            = 8
 
+# Road layout
+ROAD_W       = WINDOW_W // 3
+ROAD_X       = (WINDOW_W - ROAD_W) // 2
+LANE_W       = ROAD_W // 2
+LANE_CENTERS = [ROAD_X + LANE_W // 2, ROAD_X + LANE_W + LANE_W // 2]
+PLAYER_Y     = WINDOW_H - 130
 
-# Road layout (pixels)
-
-ROAD_W           = WINDOW_W // 3
-ROAD_X           = (WINDOW_W - ROAD_W) // 2
-LANE_W           = ROAD_W // 2
-LANE_CENTERS     = [ROAD_X + LANE_W // 2, ROAD_X + LANE_W + LANE_W // 2]
-PLAYER_Y         = WINDOW_H - 130
-
-# Sprite sizes (pixels)
+# Sprites
 CAR_W, CAR_H = 38, 70
 OBS_W, OBS_H = int(CAR_W * 3), int(CAR_H * 1.2)
-
 
 OBSTACLE_SPAWN_Y = 60
 OBSTACLE_HIT_Y   = PLAYER_Y - CAR_H
 
-
-
-# Colour palette (research-grade, minimal)
+# Colours
 C_BG           = (18,  18,  22)
 C_ROAD         = (30,  30,  36)
 C_LANE_DIV     = (55,  55,  65)

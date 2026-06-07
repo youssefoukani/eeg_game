@@ -1,7 +1,5 @@
 # ─── models.py ────────────────────────────────────────────────────────────────
-# Plain data containers shared across all modules.
-
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 
@@ -17,15 +15,15 @@ class ParticipantData:
 class Obstacle:
     lane:       int
     y:          float
-    speed:      float         # px / second
-    spawned_at: float         # game-clock seconds at spawn
-    hit:        bool = False  # True once the obstacle crossed OBSTACLE_HIT_Y
+    speed:      float
+    spawned_at: float
+    hit:        bool = False
 
 
 @dataclass
 class MetricEvent:
     timestamp:     float
-    event_type:    str                  # "lane_change" | "collision" | "avoidance"
+    event_type:    str        # "lane_change" | "collision" | "avoidance"
     player_lane:   int
     obstacle_lane: Optional[int]   = None
-    response_time: Optional[float] = None  # seconds from obstacle spawn to hit-line
+    response_time: Optional[float] = None

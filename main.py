@@ -1,17 +1,14 @@
 # ─── main.py ──────────────────────────────────────────────────────────────────
-# Entry point. Orchestrates the pre-game pipeline and the game loop.
+# Entry point.
 #
 # Pre-game pipeline:
-#   1. UserDataForm        – participant registration
-#   2. SignalQualityCheck  – EEG OSC connection + channel quality
-#   3. FixationCross       – 2–5 s resting-state baseline
-#   4. StartScreen         – instructions + SPACE to begin
+#   1. UserDataForm       – participant registration
+#   2. SignalQualityCheck – EEG OSC connection + channel quality
+#   3. StartScreen        – instructions + SPACE to begin
+#   4. FixationCross      – resting-state EEG baseline
 #
-# Run:
-#   python main.py
-#
-# Requires:
-#   pip install pygame python-osc
+# Run:  python main.py
+# Deps: pip install pygame python-osc
 
 import sys
 import pygame
@@ -26,30 +23,17 @@ def main() -> None:
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
     pygame.display.set_caption("EEG BCI Runner — Motor Imagery Prototype")
-    pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN])
+    pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN])
 
-    # 1. Participant registration
     participant = UserDataForm(screen).run()
 
-    # 2. EEG connection + signal quality (single instance reused throughout)
     eeg = EEGInterface()
     SignalQualityCheck(screen, eeg).run()
-
-    # 3. start screen
     StartScreen(screen, participant).run()
-    
-
-    # 4. fix cross
     FixationCross(screen).run()
 
-    
-    
-
-    # 5. Game loop (restart supported)
-    while True:
-        engine = GameEngine(screen, participant, eeg=eeg)
-        if not engine.run():
-            break
+    while GameEngine(screen, participant, eeg=eeg).run():
+        pass
 
     pygame.quit()
     sys.exit()

@@ -88,7 +88,6 @@ class GameEngine:
             draw_hud(
                 self._screen, self._fonts, remaining,
                 player.lane, metrics.collisions, metrics.avoidances,
-                metrics.events, obstacles.obstacles,
             )
             pygame.display.flip()
 

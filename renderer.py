@@ -13,7 +13,7 @@ from config import (
 
 
 # ── fonts ─────────────────────────────────────────────────────────────────────
-
+#funzione helper per creare i font, così da non doverlo fare in ogni classe in screens.py e game_engine
 def make_fonts() -> tuple:
     """Return (font_bold, font, font_small) monospace tuple."""
     return (
@@ -89,58 +89,74 @@ def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
 
 # ── HUD ───────────────────────────────────────────────────────────────────────
 
-def draw_hud(surf: pygame.Surface, fonts: tuple,
-             remaining: float, player_lane: int,
-             collisions: int, avoidances: int,
-             events: list, obstacles: list) -> None:
+def draw_hud(
+    surf: pygame.Surface,
+    fonts: tuple,
+    remaining: float,
+    player_lane: int,
+    collisions: int,
+    avoidances: int
+) -> None:
 
     font_b, font, font_s = fonts
     h = surf.get_height()
 
-    # Top bar
+    # Barra superiore
     pygame.draw.rect(surf, C_HUD_BG, (0, 0, WINDOW_W, 50))
     pygame.draw.line(surf, C_DIVIDER, (0, 50), (WINDOW_W, 50), 1)
 
-    mins, secs  = int(remaining) // 60, int(remaining) % 60
-    timer_col   = C_WARNING if remaining < 15 else C_TEXT
-    center_text(surf, f"{mins:02d}:{secs:02d}", font_b, timer_col, 14)
+    mins, secs = int(remaining) // 60, int(remaining) % 60
+    timer_col = C_WARNING if remaining < 15 else C_TEXT
 
-    err_s = font.render(f"ERR {collisions}", True,
-                        C_WARNING if collisions > 0 else C_MUTED)
+    center_text(
+        surf,
+        f"{mins:02d}:{secs:02d}",
+        font_b,
+        timer_col,
+        14
+    )
+
+    err_s = font.render(
+        f"ERR {collisions}",
+        True,
+        C_WARNING if collisions > 0 else C_MUTED
+    )
     surf.blit(err_s, (20, 17))
 
-    total   = collisions + avoidances
-    acc_val = (avoidances / total * 100) if total else 100.0
-    acc_s   = font.render(f"ACC {acc_val:.0f}%", True, C_ACCENT)
-    surf.blit(acc_s, (WINDOW_W - acc_s.get_width() - 20, 17))
+    total = collisions + avoidances
+    acc = (avoidances / total * 100) if total else 100.0
 
-    # Lane labels (bottom)
-    for i, label in enumerate(["LEFT", "RIGHT"]):
-        col = C_ACCENT if player_lane == i else C_MUTED
-        ls  = font_s.render(label, True, col)
-        pygame.draw.rect(surf, C_HUD_BG, (LANE_CENTERS[i] - 28, h - 32, 56, 22))
-        surf.blit(ls, (LANE_CENTERS[i] - ls.get_width() // 2, h - 29))
+    acc_s = font.render(
+        f"ACC {acc:.0f}%",
+        True,
+        C_ACCENT
+    )
+    surf.blit(
+        acc_s,
+        (WINDOW_W - acc_s.get_width() - 20, 17)
+    )
 
-    # Event log (right panel)
-    px, sy = ROAD_X + ROAD_W + 16, 70
-    surf.blit(font_s.render("EVENT LOG", True, C_MUTED), (px, sy)); sy += 22
-    pygame.draw.line(surf, C_DIVIDER, (px, sy), (px + 90, sy), 1);  sy += 8
-    TAG_COLOUR = {"collision": (C_WARNING, "HIT"),
-                  "avoidance": (C_ACCENT,  "OK "),
-                  "lane_change": (C_MUTED, ">>>")}
-    for ev in reversed(events[-4:]):
-        col, tag = TAG_COLOUR[ev.event_type]
-        surf.blit(font_s.render(f"{tag} t={ev.timestamp:5.1f}s", True, col), (px, sy))
-        sy += 20
+    # Indicatori corsia
+    for lane, label in enumerate(["LEFT", "RIGHT"]):
 
-    # Incoming panel (left panel)
-    px2, sy2 = 16, 70
-    surf.blit(font_s.render("INCOMING", True, C_MUTED), (px2, sy2)); sy2 += 22
-    pygame.draw.line(surf, C_DIVIDER, (px2, sy2), (px2 + 90, sy2), 1); sy2 += 8
-    for obs in sorted([o for o in obstacles if not o.hit],
-                      key=lambda o: o.y, reverse=True)[:3]:
-        t_left   = max(0.0, (OBSTACLE_HIT_Y - obs.y) / obs.speed)
-        lane_lbl = "L" if obs.lane == 0 else "R"
-        col      = C_WARNING if t_left < 1.0 else C_TEXT
-        surf.blit(font_s.render(f"[{lane_lbl}] {t_left:.1f}s", True, col), (px2, sy2))
-        sy2 += 20
+        color = C_ACCENT if lane == player_lane else C_MUTED
+
+        label_surface = font_s.render(
+            label,
+            True,
+            color
+        )
+
+        pygame.draw.rect(
+            surf,
+            C_HUD_BG,
+            (LANE_CENTERS[lane] - 28, h - 32, 56, 22)
+        )
+
+        surf.blit(
+            label_surface,
+            (
+                LANE_CENTERS[lane] - label_surface.get_width() // 2,
+                h - 29
+            )
+        )

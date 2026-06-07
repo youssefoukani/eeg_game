@@ -19,6 +19,102 @@ def _handle_quit(ev: pygame.event.Event) -> None:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Screen 0 – Headset Fitting Guide
+# ══════════════════════════════════════════════════════════════════════════════
+
+class HeadsetGuide:
+    """
+    Shows the two halves of guida_unicorn side by side.
+    ENTER or click the button to continue.
+    The image files are expected next to screens.py:
+        guide_top.png    (upper half of the original TIFF)
+        guide_bottom.png (lower half)
+    """
+
+    _IMG_FILES = ("guide_top.png", "guide_bottom.png")
+
+    def __init__(self, screen: pygame.Surface):
+        self._screen   = screen
+        self._fonts    = make_fonts()
+        self._clock    = pygame.time.Clock()
+        self._btn_rect = pygame.Rect(0, 0, 0, 0)
+        self._panels   = self._load_panels()
+
+    def _load_panels(self) -> list:
+        import os
+        panels = []
+        base = os.path.dirname(os.path.abspath(__file__))
+        for fname in self._IMG_FILES:
+            path = os.path.join(base, fname)
+            try:
+                surf = pygame.image.load(path).convert_alpha()
+                panels.append(surf)
+            except Exception as exc:
+                print(f"[HeadsetGuide] Could not load {path}: {exc}")
+        return panels
+
+    def run(self) -> None:
+        while True:
+            self._draw()
+            pygame.display.flip()
+            self._clock.tick(FPS)
+            for ev in pygame.event.get():
+                _handle_quit(ev)
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_RETURN:
+                    return
+                if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                    if self._btn_rect.collidepoint(ev.pos):
+                        return
+
+    def _draw(self) -> None:
+        font_b, font, font_s = self._fonts
+        s = self._screen
+        s.fill(C_BG)
+
+        # ── title ──────────────────────────────────────────────────────────────
+        center_text(s, "HEADSET FITTING GUIDE", font_b, C_TEXT,  28)
+        center_text(s, "Put on the Unicorn Hybrid Black before continuing.",
+                    font_s, C_MUTED, 58)
+        divider(s, 84)
+
+        # ── images side by side ───────────────────────────────────────────────
+        HEADER_H  = 92          # space reserved above
+        FOOTER_H  = 70          # space for button below
+        available_w = WINDOW_W - 80
+        available_h = WINDOW_H - HEADER_H - FOOTER_H
+
+        if self._panels:
+            # Scale each panel to fill half the available width, keep aspect ratio
+            panel_w = available_w // len(self._panels) - 10
+            scaled  = []
+            for surf in self._panels:
+                ow, oh = surf.get_size()
+                scale  = min(panel_w / ow, available_h / oh)
+                nw, nh = int(ow * scale), int(oh * scale)
+                scaled.append(pygame.transform.smoothscale(surf, (nw, nh)))
+
+            # Centre the group horizontally
+            total_w = sum(p.get_width() for p in scaled) + 20 * (len(scaled) - 1)
+            x       = (WINDOW_W - total_w) // 2
+            for surf in scaled:
+                y = HEADER_H + (available_h - surf.get_height()) // 2
+                s.blit(surf, (x, y))
+                x += surf.get_width() + 20
+        else:
+            # Fallback placeholder
+            center_text(s, "[ image not found — place guide_top.png and guide_bottom.png next to screens.py ]",
+                        font_s, C_WARNING, WINDOW_H // 2)
+
+        # ── button ─────────────────────────────────────────────────────────────
+        btn_y = WINDOW_H - 54
+        self._btn_rect = pygame.Rect(WINDOW_W // 2 - 130, btn_y, 260, 38)
+        pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=6)
+        ts = font_b.render("ENTER  —  CONTINUE", True, C_BG)
+        s.blit(ts, (self._btn_rect.centerx - ts.get_width() // 2,
+                    self._btn_rect.y + 10))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Screen 1 – Participant Registration Form
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -307,7 +403,10 @@ class StartScreen:
 
         for label, val in (
             ("Duration",      f"{MATCH_DURATION // 60} min  ({MATCH_DURATION} s)"),
+            ("Lanes",         "LEFT   and   RIGHT"),
+            ("Obstacle time", f"{OBSTACLE_TRAVEL_TIME:.1f} s approach window"),
             ("Collisions",    "counted — game continues"),
+            ("Controls",      "← Left Arrow    → Right Arrow"),
         ):
             lbl_s = font_s.render(f"{label:<16}", True, C_MUTED)
             val_s = font.render(val, True, C_TEXT)
@@ -315,7 +414,8 @@ class StartScreen:
             s.blit(val_s, (80 + lbl_s.get_width(), y)); y += 28
 
         y += 10; divider(s, y); y += 20
-      
+        center_text(s, "Switch lanes BEFORE the obstacle reaches you.", font_s, C_MUTED, y); y += 22
+        center_text(s, "No need for fast reflexes — plan ahead.",        font_s, C_MUTED, y); y += 36
 
         self._btn_rect = pygame.Rect(WINDOW_W // 2 - 110, y, 220, 40)
         pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=6)

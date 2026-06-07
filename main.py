@@ -15,7 +15,7 @@ import pygame
 
 from config import WINDOW_W, WINDOW_H
 from eeg_interface import EEGInterface
-from screens import UserDataForm, SignalQualityCheck, FixationCross, StartScreen
+from screens import HeadsetGuide, UserDataForm, SignalQualityCheck, FixationCross, StartScreen
 from game_engine import GameEngine
 
 
@@ -26,6 +26,8 @@ def main() -> None:
     pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN])
 
     participant = UserDataForm(screen).run()
+
+    HeadsetGuide(screen).run()
 
     eeg = EEGInterface()
     SignalQualityCheck(screen, eeg).run()

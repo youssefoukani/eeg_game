@@ -2,14 +2,7 @@
 # Stateless drawing helpers used by screens and the game engine.
 
 import pygame
-from config import (
-    WINDOW_W, CAR_W, CAR_H, OBS_W, OBS_H,
-    C_TEXT, C_MUTED, C_ACCENT, C_WARNING, C_OK,
-    C_HUD_BG, C_DIVIDER, C_ROAD, C_LANE_DIV,
-    C_OBSTACLE, C_OBSTACLE_HIT,
-    ROAD_X, ROAD_W, LANE_W, LANE_CENTERS,
-    OBSTACLE_HIT_Y,
-)
+from config import *
 
 
 # ── fonts ─────────────────────────────────────────────────────────────────────

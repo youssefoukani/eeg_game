@@ -39,7 +39,7 @@ class UserDataForm:
 
     def __init__(self, screen: pygame.Surface):
         self._screen    = screen
-        self._fb, self._f, self._fs = make_fonts()
+        self._font_big, self._font_medium, self._font_small = make_fonts()
         self._clock     = pygame.time.Clock()
         self._data      = ParticipantData()
         self._focus     = 0   # 0=user_id  1=age  2=sex  3=hand
@@ -112,8 +112,8 @@ class UserDataForm:
     def _draw(self) -> None:
         s = self._screen
         s.fill(C_BG)
-        center_text(s, "PARTICIPANT REGISTRATION", self._fb, C_TEXT, 42)
-        center_text(s, "Motor Imagery BCI Protocol", self._fs, C_MUTED, 72)
+        center_text(s, "PARTICIPANT REGISTRATION", self._font_big, C_TEXT, 42)
+        center_text(s, "Motor Imagery BCI Protocol", self._font_small, C_MUTED, 72)
         divider(s, 100)
 
         y       = 130
@@ -124,7 +124,7 @@ class UserDataForm:
         for i, key in enumerate(self._FIELDS):
             label  = {"user_id": "User ID", "age": "Age"}[key]
             active = (self._focus == i)
-            s.blit(self._fs.render(label, True, C_ACCENT if active else C_TEXT),
+            s.blit(self._font_small.render(label, True, C_ACCENT if active else C_TEXT),
                    (field_x, y));  y += 22
             box = pygame.Rect(field_x, y, field_w, 34)
             pygame.draw.rect(s, C_INPUT_ACTIVE if active else C_INPUT_BG, box, border_radius=4)
@@ -145,32 +145,32 @@ class UserDataForm:
                 br  = pygame.Rect(bx, y_pos, btn_w, 34)
                 pygame.draw.rect(s, bg, br, border_radius=4)
                 pygame.draw.rect(s, bdr, br, 1, border_radius=4)
-                ts  = self._fs.render(opt, True, C_TEXT if sel else C_MUTED)
+                ts  = self._font_small.render(opt, True, C_TEXT if sel else C_MUTED)
                 s.blit(ts, (br.centerx - ts.get_width() // 2, br.y + 9))
 
         # Sex
         active_sex = (self._focus == 2)
-        s.blit(self._fs.render("Sex", True, C_ACCENT if active_sex else C_TEXT),
+        s.blit(self._font_small.render("Sex", True, C_ACCENT if active_sex else C_TEXT),
                (field_x, y));  y += 22
         draw_selector(self._SEX, self._sex_idx, 2, y);  y += 50
 
         # Hand
         active_hand = (self._focus == 3)
-        s.blit(self._fs.render("Dominant Hand", True, C_ACCENT if active_hand else C_TEXT),
+        s.blit(self._font_small.render("Dominant Hand", True, C_ACCENT if active_hand else C_TEXT),
                (field_x, y));  y += 22
         draw_selector(self._HAND, self._hand_idx, 3, y);  y += 54
 
         # Error / hints
         divider(s, y);  y += 16
         if self._error:
-            center_text(s, self._error, self._fs, C_WARNING, y);  y += 24
-        center_text(s, "TAB / SHIFT-TAB  navigate fields", self._fs, C_MUTED, y);  y += 20
-        center_text(s, "← →  cycle options   ENTER  confirm", self._fs, C_MUTED, y)
+            center_text(s, self._error, self._font_small, C_WARNING, y);  y += 24
+        center_text(s, "TAB / SHIFT-TAB  navigate fields", self._font_small, C_MUTED, y);  y += 20
+        center_text(s, "← →  cycle options   ENTER  confirm", self._font_small, C_MUTED, y)
 
         # Confirm button
         btn = pygame.Rect(WINDOW_W // 2 - 80, WINDOW_H - 70, 160, 36)
         pygame.draw.rect(s, C_ACCENT, btn, border_radius=5)
-        ts = self._fb.render("CONFIRM", True, C_BG)
+        ts = self._font_big.render("CONFIRM", True, C_BG)
         s.blit(ts, (btn.centerx - ts.get_width() // 2, btn.y + 9))
 
 
@@ -203,7 +203,7 @@ class SignalQualityCheck:
         self._screen = screen
         self._eeg    = eeg
         # Inizializzazione font (usa le tue funzioni di helper, es. make_fonts o _fonts)
-        self._fb, self._f, self._fs = make_fonts() 
+        self._font_big, self._font_medium, self._font_small = make_fonts() 
         self._clock  = pygame.time.Clock()
 
     def run(self) -> None:
@@ -234,11 +234,11 @@ class SignalQualityCheck:
         
         s.fill(C_BG) 
         
-        center_text(s, "SCHERMATA QUALITY CHECK", self._fb, C_TEXT, WINDOW_H // 2 - 40)
-        center_text(s, "[ Da implementare ]", self._f, C_WARNING, WINDOW_H // 2)
+        center_text(s, "SCHERMATA QUALITY CHECK", self._font_big, C_TEXT, WINDOW_H // 2 - 40)
+        center_text(s, "[ Da implementare ]", self._font_medium, C_WARNING, WINDOW_H // 2)
         
-        center_text(s, "L'interfaccia OSC è attiva in background.", self._fs, C_MUTED, WINDOW_H // 2 + 60)
-        center_text(s, "Premere [ SPAZIO ] per continuare", self._fs, C_ACCENT, WINDOW_H // 2 + 120)
+        center_text(s, "L'interfaccia OSC è attiva in background.", self._font_small, C_MUTED, WINDOW_H // 2 + 60)
+        center_text(s, "Premere [ SPAZIO ] per continuare", self._font_small, C_ACCENT, WINDOW_H // 2 + 120)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Screen 3 – Fixation Cross
@@ -293,7 +293,7 @@ class StartScreen:
     def __init__(self, screen: pygame.Surface, participant: ParticipantData):
         self._screen      = screen
         self._participant = participant
-        self._fb, self._f, self._fs = make_fonts()
+        self._font_big, self._font_medium, self._font_small = make_fonts()
         self._clock       = pygame.time.Clock()
 
     def run(self) -> None:
@@ -311,8 +311,8 @@ class StartScreen:
         s.fill(C_BG)
 
         y = 40
-        center_text(s, "EEG BCI RUNNER",          self._fb, C_TEXT,  y); y += 32
-        center_text(s, "Motor Imagery Prototype",  self._fs, C_MUTED, y); y += 36
+        center_text(s, "EEG BCI RUNNER",          self._font_big, C_TEXT,  y); y += 32
+        center_text(s, "Motor Imagery Prototype",  self._font_small, C_MUTED, y); y += 36
         divider(s, y); y += 20
 
         for line in [
@@ -320,7 +320,7 @@ class StartScreen:
             f"Age          : {p.age}    Sex: {p.sex}",
             f"Dominant hand: {p.dominant_hand}",
         ]:
-            s.blit(self._fs.render(line, True, C_MUTED), (80, y)); y += 22
+            s.blit(self._font_small.render(line, True, C_MUTED), (80, y)); y += 22
         y += 12
         divider(s, y); y += 20
 
@@ -331,19 +331,19 @@ class StartScreen:
             ("Collisions",    "counted — game continues"),
             ("Controls",      "← Left Arrow    → Right Arrow"),
         ]:
-            lbl_s = self._fs.render(f"{label:<16}", True, C_MUTED)
+            lbl_s = self._font_small.render(f"{label:<16}", True, C_MUTED)
             val_s = self._f.render(val, True, C_TEXT)
             s.blit(lbl_s, (80, y))
             s.blit(val_s, (80 + lbl_s.get_width(), y)); y += 28
 
         y += 10
         divider(s, y); y += 20
-        center_text(s, "Switch lanes BEFORE the obstacle reaches you.", self._fs, C_MUTED, y); y += 22
-        center_text(s, "No need for fast reflexes — plan ahead.",        self._fs, C_MUTED, y); y += 36
+        center_text(s, "Switch lanes BEFORE the obstacle reaches you.", self._font_small, C_MUTED, y); y += 22
+        center_text(s, "No need for fast reflexes — plan ahead.",        self._font_small, C_MUTED, y); y += 36
 
         btn = pygame.Rect(WINDOW_W // 2 - 90, y, 180, 40)
         pygame.draw.rect(s, C_ACCENT, btn, border_radius=6)
-        ts = self._fb.render("SPACE  —  START", True, C_BG)
+        ts = self._font_big.render("SPACE  —  START", True, C_BG)
         s.blit(ts, (btn.centerx - ts.get_width() // 2, btn.y + 11))
 
 
@@ -365,7 +365,7 @@ class ResultsScreen:
         self._metrics     = metrics
         self._participant = participant
         self._csv_path    = csv_path
-        self._fb, self._f, _ = make_fonts()
+        self._font_big, self._font_medium, _ = make_fonts()
         self._clock       = pygame.time.Clock()
 
     def run(self) -> bool:
@@ -377,7 +377,7 @@ class ResultsScreen:
                 if text:
                     ts = fnt.render(text, True, col)
                     self._screen.blit(ts, (WINDOW_W // 2 - ts.get_width() // 2, y))
-                y += 36 if fnt is self._fb else 30
+                y += 36 if fnt is self._font_big else 30
             pygame.display.flip()
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:      return False
@@ -390,22 +390,22 @@ class ResultsScreen:
         m   = self._metrics
         art = m.avg_response_time
         return [
-            ("SESSION COMPLETE",                                    self._fb, C_TEXT),
-            ("",                                                    self._f,  C_MUTED),
-            (f"Participant        {self._participant.user_id}",     self._f,  C_TEXT),
-            ("",                                                    self._f,  C_MUTED),
-            (f"Total obstacles    {m.collisions + m.avoidances}",   self._f,  C_TEXT),
-            (f"Collisions         {m.collisions}",                  self._f,
+            ("SESSION COMPLETE",                                    self._font_big, C_TEXT),
+            ("",                                                    self._font_medium,  C_MUTED),
+            (f"Participant        {self._participant.user_id}",     self._font_medium,  C_TEXT),
+            ("",                                                    self._font_medium,  C_MUTED),
+            (f"Total obstacles    {m.collisions + m.avoidances}",   self._font_medium,  C_TEXT),
+            (f"Collisions         {m.collisions}",                  self._font_medium,
              C_WARNING if m.collisions > 0 else C_TEXT),
-            (f"Successful avoids  {m.avoidances}",                  self._f,  C_ACCENT),
-            (f"Accuracy           {m.accuracy:.1f}%",               self._fb,
+            (f"Successful avoids  {m.avoidances}",                  self._font_medium,  C_ACCENT),
+            (f"Accuracy           {m.accuracy:.1f}%",               self._font_big,
              C_ACCENT if m.accuracy >= 70 else C_WARNING),
-            ("",                                                    self._f,  C_MUTED),
+            ("",                                                    self._font_medium,  C_MUTED),
             (f"Avg response time  {art:.2f} s" if art
-             else "Avg response time  —",                           self._f,  C_TEXT),
-            (f"Lane changes       {m.lane_changes}",                self._f,  C_TEXT),
-            ("",                                                    self._f,  C_MUTED),
-            (f"CSV → {self._csv_path}",                             self._f,  C_MUTED),
-            ("",                                                    self._f,  C_MUTED),
-            ("Q  quit     R  restart",                              self._f,  C_MUTED),
+             else "Avg response time  —",                           self._font_medium,  C_TEXT),
+            (f"Lane changes       {m.lane_changes}",                self._font_medium,  C_TEXT),
+            ("",                                                    self._font_medium,  C_MUTED),
+            (f"CSV → {self._csv_path}",                             self._font_medium,  C_MUTED),
+            ("",                                                    self._font_medium,  C_MUTED),
+            ("Q  quit     R  restart",                              self._font_medium,  C_MUTED),
         ]

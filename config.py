@@ -1,13 +1,17 @@
 # ─── config.py ────────────────────────────────────────────────────────────────
 # All tunable constants for the EEG BCI Runner.
 # Change values here; nothing else needs to be touched.
-
+import pygame
+pygame.init()
 # Window
-WINDOW_W, WINDOW_H = 520, 700
+info = pygame.display.Info()
+WINDOW_W = info.current_w
+WINDOW_H = info.current_h
+
 FPS                = 60
 
 # Session timing
-MATCH_DURATION     = 10    # seconds (2 minutes)
+MATCH_DURATION     = 60    # seconds (2 minutes)
 CROSS_DURATION     = 2.0    # seconds – minimum fixation cross duration
 
 # Lane identifiers
@@ -21,18 +25,24 @@ OBSTACLE_TRAVEL_TIME = 2.8  # seconds from spawn to collision line
 SPAWN_MIN            = 2.5  # seconds between obstacles (min)
 SPAWN_MAX            = 4.5  # seconds between obstacles (max)
 
+
 # Road layout (pixels)
-ROAD_X           = 110
-ROAD_W           = 300
+
+ROAD_W           = WINDOW_W // 3
+ROAD_X           = (WINDOW_W - ROAD_W) // 2
 LANE_W           = ROAD_W // 2
 LANE_CENTERS     = [ROAD_X + LANE_W // 2, ROAD_X + LANE_W + LANE_W // 2]
 PLAYER_Y         = WINDOW_H - 130
-OBSTACLE_SPAWN_Y = 60
-OBSTACLE_HIT_Y   = PLAYER_Y - 10
 
 # Sprite sizes (pixels)
 CAR_W, CAR_H = 38, 70
-OBS_W, OBS_H = 38, 50
+OBS_W, OBS_H = int(CAR_W * 3), int(CAR_H * 1.2)
+
+
+OBSTACLE_SPAWN_Y = 60
+OBSTACLE_HIT_Y   = PLAYER_Y - CAR_H
+
+
 
 # Colour palette (research-grade, minimal)
 C_BG           = (18,  18,  22)

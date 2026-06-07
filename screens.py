@@ -69,24 +69,50 @@ class HeadsetGuide:
     def _draw(self) -> None:
         font_b, font, font_s = self._fonts
         s = self._screen
+
+        # ── background ─────────────────────────────────────────────────────────
         s.fill(C_BG)
 
-        # ── title ──────────────────────────────────────────────────────────────
-        center_text(s, "HEADSET FITTING GUIDE", font_b, C_TEXT,  28)
-        center_text(s, "Put on the Unicorn Hybrid Black before continuing.",
-                    font_s, C_MUTED, 58)
-        divider(s, 84)
+        # ── header card ────────────────────────────────────────────────────────
+        HEADER_H = 110
+        FOOTER_H = 80
+        PADDING  = 16
 
-        # ── images side by side ───────────────────────────────────────────────
-        HEADER_H  = 92          # space reserved above
-        FOOTER_H  = 70          # space for button below
-        available_w = WINDOW_W - 80
-        available_h = WINDOW_H - HEADER_H - FOOTER_H
+        # Subtle card behind the title area
+        card = pygame.Rect(0, 0, WINDOW_W, HEADER_H)
+        pygame.draw.rect(s, C_HUD_BG, card)
+        pygame.draw.line(s, C_ACCENT, (0, HEADER_H), (WINDOW_W, HEADER_H), 2)
+
+        # Step badge — "STEP 1 of 5" style indicator
+        badge_font = pygame.font.SysFont("monospace", 11, bold=True)
+        badge_surf = badge_font.render("PRE-SESSION  ·  STEP 0", True, C_ACCENT)
+        s.blit(badge_surf, (PADDING + 4, 14))
+
+        # Main title — larger and prominent
+        title_font = pygame.font.SysFont("monospace", 22, bold=True)
+        title_surf = title_font.render("HEADSET FITTING GUIDE", True, C_TEXT)
+        s.blit(title_surf, (PADDING + 4, 34))
+
+        # Subtitle
+        sub = font_s.render(
+            "Put on the Unicorn Hybrid Black before continuing.", True, C_MUTED)
+        s.blit(sub, (PADDING + 4, 68))
+
+        # Right-side hint (keyboard shortcut)
+        hint = font_s.render("ENTER  or  click to continue", True, C_MUTED)
+        s.blit(hint, (WINDOW_W - hint.get_width() - PADDING, 14))
+
+        # ── image area ─────────────────────────────────────────────────────────
+        IMG_GAP     = 16          # gap between panels
+        IMG_PAD     = 24          # horizontal margin from window edge
+        available_w = WINDOW_W - IMG_PAD * 2
+        available_h = WINDOW_H - HEADER_H - FOOTER_H - 16
 
         if self._panels:
-            # Scale each panel to fill half the available width, keep aspect ratio
-            panel_w = available_w // len(self._panels) - 10
-            scaled  = []
+            n       = len(self._panels)
+            panel_w = (available_w - IMG_GAP * (n - 1)) // n
+
+            scaled = []
             for surf in self._panels:
                 ow, oh = surf.get_size()
                 scale  = min(panel_w / ow, available_h / oh)
@@ -94,24 +120,56 @@ class HeadsetGuide:
                 scaled.append(pygame.transform.smoothscale(surf, (nw, nh)))
 
             # Centre the group horizontally
-            total_w = sum(p.get_width() for p in scaled) + 20 * (len(scaled) - 1)
+            total_w = sum(p.get_width() for p in scaled) + IMG_GAP * (n - 1)
             x       = (WINDOW_W - total_w) // 2
-            for surf in scaled:
-                y = HEADER_H + (available_h - surf.get_height()) // 2
-                s.blit(surf, (x, y))
-                x += surf.get_width() + 20
-        else:
-            # Fallback placeholder
-            center_text(s, "[ image not found — place guide_top.png and guide_bottom.png next to screens.py ]",
-                        font_s, C_WARNING, WINDOW_H // 2)
+            img_top = HEADER_H + 12
 
-        # ── button ─────────────────────────────────────────────────────────────
-        btn_y = WINDOW_H - 54
-        self._btn_rect = pygame.Rect(WINDOW_W // 2 - 130, btn_y, 260, 38)
-        pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=6)
-        ts = font_b.render("ENTER  —  CONTINUE", True, C_BG)
-        s.blit(ts, (self._btn_rect.centerx - ts.get_width() // 2,
-                    self._btn_rect.y + 10))
+            for surf in scaled:
+                # Shadow / border card behind each image
+                img_y   = img_top + (available_h - surf.get_height()) // 2
+                border  = pygame.Rect(x - 4, img_y - 4,
+                                      surf.get_width() + 8, surf.get_height() + 8)
+                pygame.draw.rect(s, C_DIVIDER, border, border_radius=6)
+                s.blit(surf, (x, img_y))
+                x += surf.get_width() + IMG_GAP
+
+        else:
+            # ── fallback placeholder ───────────────────────────────────────────
+            box = pygame.Rect(IMG_PAD, HEADER_H + 16,
+                              available_w, available_h)
+            pygame.draw.rect(s, C_INPUT_BG, box, border_radius=8)
+            pygame.draw.rect(s, C_INPUT_BORDER, box, 1, border_radius=8)
+
+            # Icon-like cross
+            cx, cy = box.centerx, box.centery - 30
+            for dx, dy, w, h in ((-24, -4, 48, 8), (-4, -24, 8, 48)):
+                pygame.draw.rect(s, C_DIVIDER,
+                                 pygame.Rect(cx + dx, cy + dy, w, h),
+                                 border_radius=3)
+
+            missing = font_b.render("Images not found", True, C_MUTED)
+            detail  = font_s.render(
+                "Place  guide_top.png  and  guide_bottom.png  next to  screens.py",
+                True, C_WARNING)
+            s.blit(missing, (box.centerx - missing.get_width() // 2, cy + 30))
+            s.blit(detail,  (box.centerx - detail.get_width()  // 2, cy + 58))
+
+        # ── footer button ──────────────────────────────────────────────────────
+        BTN_W, BTN_H = 280, 44
+        btn_y = WINDOW_H - FOOTER_H // 2 - BTN_H // 2
+        self._btn_rect = pygame.Rect(WINDOW_W // 2 - BTN_W // 2, btn_y, BTN_W, BTN_H)
+
+        # Glow effect — slightly larger rect in accent colour at low alpha
+        glow = pygame.Surface((BTN_W + 12, BTN_H + 12), pygame.SRCALPHA)
+        pygame.draw.rect(glow, (*C_ACCENT, 40), glow.get_rect(), border_radius=10)
+        s.blit(glow, (self._btn_rect.x - 6, self._btn_rect.y - 6))
+
+        pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=8)
+
+        btn_font = pygame.font.SysFont("monospace", 16, bold=True)
+        ts = btn_font.render("ENTER  —  CONTINUE", True, C_BG)
+        s.blit(ts, (self._btn_rect.centerx - ts.get_width()  // 2,
+                    self._btn_rect.centery - ts.get_height() // 2))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -148,7 +206,7 @@ class UserDataForm:
         self._hand_idx= 0
         self._focus   = 0
         self._error   = ""
-        # Hit-rects populated each frame by _draw()
+
         self._rects: dict = {}   # key → pygame.Rect
 
     def run(self) -> ParticipantData:
@@ -248,9 +306,9 @@ class UserDataForm:
         center_text(s, "Motor Imagery BCI Protocol", font_s, C_MUTED, 72)
         divider(s, 100)
 
-        field_w = 320
+        field_w = WINDOW_W // 2
         field_x = WINDOW_W // 2 - field_w // 2
-        y       = 130
+        y       = WINDOW_H // 3
 
         # ── text fields (User ID, Age) ────────────────────────────────────────
         labels = {"user_id": "User ID", "age": "Age"}

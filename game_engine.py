@@ -69,7 +69,7 @@ class GameEngine:
             cue_direction = None
             if remaining > 0 and obstacles.obstacles:
                 # Filtra gli ostacoli non ancora superati e prendi il più vicino (y maggiore)
-                valid_obstacles = [o for o in obstacles.obstacles if not o.hit and o.y < PLAYER_Y]
+                valid_obstacles = [o for o in obstacles.obstacles if o.y - OBS_H/2 < PLAYER_Y + CAR_H/2]
                 if valid_obstacles:
                     next_obstacle = max(valid_obstacles, key=lambda o: o.y)
                     

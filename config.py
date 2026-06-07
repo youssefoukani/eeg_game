@@ -21,9 +21,9 @@ LANE_RIGHT         = 1
 # Obstacle timing
 # Must be ≥ 2 s to cover EEG epoch + preprocessing + inference latency.
 # Breakdown: ~2.0 s epoch | ~0.3 s filter | ~0.1 s inference | ~0.4 s margin
-OBSTACLE_TRAVEL_TIME = 2.8  # seconds from spawn to collision line
-SPAWN_MIN            = 2.5  # seconds between obstacles (min)
-SPAWN_MAX            = 4.5  # seconds between obstacles (max)
+OBSTACLE_TRAVEL_TIME = 8  # seconds from spawn to collision line
+SPAWN_MIN            = 6  # seconds between obstacles (min)
+SPAWN_MAX            = 8  # seconds between obstacles (max)
 
 
 # Road layout (pixels)

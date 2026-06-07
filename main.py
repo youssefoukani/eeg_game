@@ -35,11 +35,15 @@ def main() -> None:
     eeg = EEGInterface()
     SignalQualityCheck(screen, eeg).run()
 
-    # 3. Fixation cross baseline
+    # 3. start screen
+    StartScreen(screen, participant).run()
+    
+
+    # 4. fix cross
     FixationCross(screen).run()
 
-    # 4. Instruction screen
-    StartScreen(screen, participant).run()
+    
+    
 
     # 5. Game loop (restart supported)
     while True:

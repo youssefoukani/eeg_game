@@ -62,36 +62,41 @@ class UserDataForm:
     # ── private ───────────────────────────────────────────────────────────────
 
     def _handle_key(self, ev: pygame.event.Event) -> None:
-        if ev.key == pygame.K_TAB:
-            shift        = pygame.key.get_mods() & pygame.KMOD_SHIFT
-            self._focus  = (self._focus + (-1 if shift else 1)) % 4
+
+        # NAVIGAZIONE CON FRECCE SU/GIÙ (al posto di TAB)
+        if ev.key == pygame.K_DOWN:
+            self._focus = (self._focus + 1) % 4
+
+        elif ev.key == pygame.K_UP:
+            self._focus = (self._focus - 1) % 4
 
         elif ev.key == pygame.K_RETURN:
             if self._validate():
-                # Return is caught by the caller via StopIteration trick;
-                # instead we raise a sentinel that run() catches.
                 raise _FormDone(self._data)
 
         elif ev.key == pygame.K_LEFT:
             if self._focus == 2:
-                self._sex_idx  = (self._sex_idx  - 1) % len(self._SEX)
+                self._sex_idx = (self._sex_idx - 1) % len(self._SEX)
             elif self._focus == 3:
                 self._hand_idx = (self._hand_idx - 1) % len(self._HAND)
 
         elif ev.key == pygame.K_RIGHT:
             if self._focus == 2:
-                self._sex_idx  = (self._sex_idx  + 1) % len(self._SEX)
+                self._sex_idx = (self._sex_idx + 1) % len(self._SEX)
             elif self._focus == 3:
                 self._hand_idx = (self._hand_idx + 1) % len(self._HAND)
 
         elif self._focus in (0, 1):
             key = self._FIELDS[self._focus]
+
             if ev.key == pygame.K_BACKSPACE:
                 self._texts[key] = self._texts[key][:-1]
             else:
                 ch = ev.unicode
+
                 if key == "age" and ch.isdigit() and len(self._texts[key]) < 3:
                     self._texts[key] += ch
+
                 elif key == "user_id" and ch.isprintable() and len(self._texts[key]) < 20:
                     self._texts[key] += ch
 
@@ -164,14 +169,10 @@ class UserDataForm:
         divider(s, y);  y += 16
         if self._error:
             center_text(s, self._error, self._font_small, C_WARNING, y);  y += 24
-        center_text(s, "TAB / SHIFT-TAB  navigate fields", self._font_small, C_MUTED, y);  y += 20
-        center_text(s, "← →  cycle options   ENTER  confirm", self._font_small, C_MUTED, y)
+        
+        center_text(s, "press ENTER to confirm", self._font_small, C_MUTED, y)
 
-        # Confirm button
-        btn = pygame.Rect(WINDOW_W // 2 - 80, WINDOW_H - 70, 160, 36)
-        pygame.draw.rect(s, C_ACCENT, btn, border_radius=5)
-        ts = self._font_big.render("CONFIRM", True, C_BG)
-        s.blit(ts, (btn.centerx - ts.get_width() // 2, btn.y + 9))
+        
 
 
 class _FormDone(Exception):
@@ -237,11 +238,10 @@ class SignalQualityCheck:
         center_text(s, "SCHERMATA QUALITY CHECK", self._font_big, C_TEXT, WINDOW_H // 2 - 40)
         center_text(s, "[ Da implementare ]", self._font_medium, C_WARNING, WINDOW_H // 2)
         
-        center_text(s, "L'interfaccia OSC è attiva in background.", self._font_small, C_MUTED, WINDOW_H // 2 + 60)
         center_text(s, "Premere [ SPAZIO ] per continuare", self._font_small, C_ACCENT, WINDOW_H // 2 + 120)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Screen 3 – Fixation Cross
+# Screen 4 – Fixation Cross
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class FixationCross:
@@ -282,7 +282,7 @@ class FixationCross:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Screen 4 – Start Screen
+# Screen 3 – Start Screen
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class StartScreen:

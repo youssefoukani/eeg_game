@@ -2,11 +2,7 @@
 import time
 import pygame
 
-from config import (
-    FPS, MATCH_DURATION, WINDOW_H,
-    C_BG, C_OBSTACLE, C_OBSTACLE_HIT, C_PLAYER,
-    LANE_CENTERS, PLAYER_Y, OBSTACLE_HIT_Y, OBSTACLE_SPAWN_Y, OBSTACLE_TRAVEL_TIME,
-)
+from config import *
 from models import ParticipantData
 from eeg_interface import EEGInterface
 from input_manager import InputManager
@@ -69,10 +65,30 @@ class GameEngine:
             self._screen.fill(C_BG)
             draw_road(self._screen, dash_offset)
 
+            # ─── 1. DETERMINAZIONE DEL CUE VISIVO (FRECCIA) ───
+            cue_direction = None
+            if remaining > 0 and obstacles.obstacles:
+                # Filtra gli ostacoli non ancora superati e prendi il più vicino (y maggiore)
+                valid_obstacles = [o for o in obstacles.obstacles if not o.hit and o.y < PLAYER_Y]
+                if valid_obstacles:
+                    next_obstacle = max(valid_obstacles, key=lambda o: o.y)
+                    
+                    # Se l'ostacolo è a sinistra (0), la freccia deve indicare destra (1) e viceversa
+                    if next_obstacle.lane == 0:
+                        cue_direction = "RIGHT"
+                    else:
+                        cue_direction = "LEFT"
+
+            # Render degli ostacoli e dell'auto
             for obs in obstacles.obstacles:
                 draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,
                               C_OBSTACLE_HIT if obs.hit else C_OBSTACLE)
             draw_car(self._screen, LANE_CENTERS[player.lane], PLAYER_Y, C_PLAYER)
+            
+            # ─── 2. RENDERING DELLA FRECCIA DI CUE ───
+            if cue_direction:
+                self.draw_cue_arrow(cue_direction)
+
             draw_hud(self._screen, self._fonts, remaining,
                      player.lane, metrics.collisions, metrics.avoidances)
             pygame.display.flip()
@@ -84,3 +100,39 @@ class GameEngine:
                 )
                 metrics.print_report()
                 return ResultsScreen(self._screen, metrics, self._participant, csv_path).run()
+
+    # ─── 3. FUNZIONE DI DISEGNO DELLA FRECCIA ───
+    def draw_cue_arrow(self, direction: str) -> None:
+        """Disegna una freccia geometrica o testuale al centro dello schermo."""
+        center_x = WINDOW_W // 2
+        center_y = WINDOW_H // 4 # Posizionata leggermente sopra il centro geometrico
+        
+        # Colore vibrante per attirare l'attenzione del soggetto (es. il tuo C_ACCENT o Verde)
+        arrow_color = C_CUE 
+        
+        if direction == "LEFT":
+            # Disegno di una freccia verso sinistra usando i poligoni di Pygame
+            points = [
+                (center_x + 30, center_y - 15), # Coda superiore
+                (center_x - 10, center_y - 15), # Inizio punta sup
+                (center_x - 10, center_y - 30), # Punta esterna sup
+                (center_x - 40, center_y),      # Estremo punta
+                (center_x - 10, center_y + 30), # Punta esterna inf
+                (center_x - 10, center_y + 15), # Inizio punta inf
+                (center_x + 30, center_y + 15), # Coda inferiore
+            ]
+        else: # RIGHT
+            # Disegno di una freccia verso destra
+            points = [
+                (center_x - 30, center_y - 15),
+                (center_x + 10, center_y - 15),
+                (center_x + 10, center_y - 30),
+                (center_x + 40, center_y),
+                (center_x + 10, center_y + 30),
+                (center_x + 10, center_y + 15),
+                (center_x - 30, center_y + 15),
+            ]
+            
+        pygame.draw.polygon(self._screen, arrow_color, points)
+        # Un piccolo bordo scuro opzionale per staccare dallo sfondo
+        pygame.draw.polygon(self._screen, C_BG, points, 2)

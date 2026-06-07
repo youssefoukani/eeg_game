@@ -307,10 +307,7 @@ class StartScreen:
 
         for label, val in (
             ("Duration",      f"{MATCH_DURATION // 60} min  ({MATCH_DURATION} s)"),
-            ("Lanes",         "LEFT   and   RIGHT"),
-            ("Obstacle time", f"{OBSTACLE_TRAVEL_TIME:.1f} s approach window"),
             ("Collisions",    "counted — game continues"),
-            ("Controls",      "← Left Arrow    → Right Arrow"),
         ):
             lbl_s = font_s.render(f"{label:<16}", True, C_MUTED)
             val_s = font.render(val, True, C_TEXT)
@@ -318,8 +315,7 @@ class StartScreen:
             s.blit(val_s, (80 + lbl_s.get_width(), y)); y += 28
 
         y += 10; divider(s, y); y += 20
-        center_text(s, "Switch lanes BEFORE the obstacle reaches you.", font_s, C_MUTED, y); y += 22
-        center_text(s, "No need for fast reflexes — plan ahead.",        font_s, C_MUTED, y); y += 36
+      
 
         self._btn_rect = pygame.Rect(WINDOW_W // 2 - 110, y, 220, 40)
         pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=6)

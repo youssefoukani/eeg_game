@@ -18,8 +18,7 @@ def make_fonts() -> tuple:
 
 # ── generic helpers ───────────────────────────────────────────────────────────
 
-def center_text(surf: pygame.Surface, text: str, font, colour: tuple,
-                y: int, x: int | None = None) -> int:
+def center_text(surf: pygame.Surface, text: str, font, colour, y: int, x=None):
     """Blit horizontally centred text; return surface height."""
     s  = font.render(text, True, colour)
     bx = (x if x is not None else WINDOW_W // 2) - s.get_width() // 2

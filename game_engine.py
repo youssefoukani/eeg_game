@@ -22,9 +22,7 @@ from screens import ResultsScreen
 class GameEngine:
     """Runs one 2-minute session. Returns True if the user requests a restart."""
 
-    def __init__(self, screen: pygame.Surface,
-                 participant: ParticipantData,
-                 eeg: EEGInterface | None = None):
+    def __init__(self, screen: pygame.Surface, participant, eeg=None):
         self._screen      = screen
         self._participant = participant
         self._eeg         = eeg or EEGInterface()

@@ -156,7 +156,7 @@ class HeadsetGuide:
 
         # ── footer button ──────────────────────────────────────────────────────
         BTN_W, BTN_H = 280, 44
-        btn_y = WINDOW_H - FOOTER_H // 2 - BTN_H // 2
+        btn_y = WINDOW_H * 7/8
         self._btn_rect = pygame.Rect(WINDOW_W // 2 - BTN_W // 2, btn_y, BTN_W, BTN_H)
 
         # Glow effect — slightly larger rect in accent colour at low alpha

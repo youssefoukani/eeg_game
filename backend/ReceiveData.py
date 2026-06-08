@@ -1,42 +1,63 @@
-"""Example program to show how to read a multi-channel time series from LSL."""
+"""
+Programma per leggere un flusso EEG da LSL con un overlap del 50%
+tra snapshot consecutivi, basato sul numero di campioni.
+"""
 
 from pylsl import StreamInlet, resolve_byprop
 from DataBuffer import EEGDataBuffer
-import time
 
 def main():
-    # first resolve an EEG stream on the lab network
-    print("looking for an EEG stream...")
+    # 1. Configurazione
+    WINDOW_SIZE = 250
+    SNAP_SAMPLE_FREQ = 250  # Ogni quanti campioni viene creato un nuovo snapshot
+    
+    # 2. Inizializzazione stream LSL
+    print("Ricerca di un flusso EEG sulla rete locale...")
     streams = resolve_byprop("type", "EEG")
+    
+    if not streams:
+        print("Nessuno stream EEG trovato. Assicurati che LSL sia attivo.")
+        return
 
-    # create a new inlet to read from the stream
     inlet = StreamInlet(streams[0])
-    eeg_buffer = EEGDataBuffer(window_size=250)
+    eeg_buffer = EEGDataBuffer(window_size=WINDOW_SIZE)
+    
+    # Contatori
+    sample_counter = 0
+    samples_since_last_snapshot = 0
+    
+    print(f"Stream trovato. Buffer: {WINDOW_SIZE} campioni, Overlap: {SNAP_SAMPLE_FREQ } campioni.")
+    print("Inizio acquisizione...")
 
-    last_prediction = time.time()
-    tempi = []
-    while True:
+    try:
+        while True:
+            # Recupero singolo campione
+            sample, timestamp = inlet.pull_sample()
+            
+            # Aggiornamento buffer e contatori
+            eeg_buffer.add_sample(sample)
+            sample_counter += 1
+            samples_since_last_snapshot += 1
 
-        sample, timestamp = inlet.pull_sample()
-
-        eeg_buffer.add_sample(sample)
-
-        if not eeg_buffer.is_ready():
-            continue
-
-        if time.time() - last_prediction < 0.5:
-            continue
-        last_prediction = time.time()
-
-
-        snapshot = eeg_buffer.get_snapshot()
-        tempi.append(time.time())
-
-        print(f"Snapshot shape: {snapshot.shape}", tempi[-1] - tempi[-2] if len(tempi) > 1 else "N/A")
-        print(snapshot)
-        # prediction = model.predict(snapshot)
-
-
+            # 3. Logica di estrazione basata sull'overlap
+            # Aspettiamo di aver riempito il buffer la prima volta E 
+            # di aver accumulato almeno 125 nuovi campioni.
+            if eeg_buffer.is_ready() and samples_since_last_snapshot >= SNAP_SAMPLE_FREQ:
+                
+                snapshot = eeg_buffer.get_snapshot()
+                
+                # Resettiamo il contatore dei campioni, NON il buffer intero
+                # (il buffer mantiene i 125 campioni precedenti necessari per l'overlap)
+                samples_since_last_snapshot = 0
+                
+                # Output di verifica
+                print("-" * 30)
+                print(f"Snapshot estratto a campione n. {sample_counter}")
+                print(f"Shape snapshot: {snapshot.shape}")
+                print(snapshot) # Decommenta se vuoi vedere i dati grezzi
+                
+    except KeyboardInterrupt:
+        print("\nAcquisizione interrotta dall'utente.")
 
 if __name__ == "__main__":
     main()

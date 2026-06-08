@@ -10,7 +10,7 @@ from pylsl import StreamInfo, StreamOutlet, local_clock
 
 
 def main(argv):
-    srate = 100
+    srate = 250
     name = "BioSemi"
     type = "EEG"
     n_channels = 8

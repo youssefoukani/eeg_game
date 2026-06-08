@@ -5,6 +5,7 @@ tra snapshot consecutivi, basato sul numero di campioni.
 
 from pylsl import StreamInlet, resolve_byprop
 from DataBuffer import EEGDataBuffer
+from PreProcessor import pre_process
 
 def main():
     # 1. Configurazione
@@ -55,6 +56,9 @@ def main():
                 # print(f"Snapshot estratto a campione n. {sample_counter}")
                 # print(f"Shape snapshot: {snapshot.shape}")
                 # print(snapshot) 
+                normalized_snapshot = pre_process(snapshot)
+                
+                print(normalized_snapshot)
                 
     except KeyboardInterrupt:
         print("\nAcquisizione interrotta dall'utente.")

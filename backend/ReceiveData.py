@@ -7,6 +7,7 @@ from pylsl import StreamInlet, resolve_byprop
 from DataBuffer import EEGDataBuffer
 from PreProcessor import pre_process
 from ModelManager import predict
+from osc_sim import send_prediction
 
 def main():
     # 1. Configurazione
@@ -64,6 +65,7 @@ def main():
                 prediction = predict(normalized_snapshot)
 
                 print(f"Predizione: {prediction}")
+                send_prediction(prediction)
 
     except KeyboardInterrupt:
         print("\nAcquisizione interrotta dall'utente.")

@@ -51,10 +51,10 @@ def main():
                 samples_since_last_snapshot = 0
                 
                 # Output di verifica
-                print("-" * 30)
-                print(f"Snapshot estratto a campione n. {sample_counter}")
-                print(f"Shape snapshot: {snapshot.shape}")
-                print(snapshot) # Decommenta se vuoi vedere i dati grezzi
+                # print("-" * 30)
+                # print(f"Snapshot estratto a campione n. {sample_counter}")
+                # print(f"Shape snapshot: {snapshot.shape}")
+                # print(snapshot) 
                 
     except KeyboardInterrupt:
         print("\nAcquisizione interrotta dall'utente.")

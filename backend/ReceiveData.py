@@ -14,7 +14,7 @@ def main():
     eeg_buffer = EEGDataBuffer(window_size=250)
 
     last_prediction = time.time()
-
+    tempi = []
     while True:
 
         sample, timestamp = inlet.pull_sample()
@@ -24,13 +24,18 @@ def main():
         if not eeg_buffer.is_ready():
             continue
 
-        if time.time() - last_prediction < 0.2:
+        if time.time() - last_prediction < 0.5:
             continue
         last_prediction = time.time()
 
+
         snapshot = eeg_buffer.get_snapshot()
-        print(f"Snapshot shape: {snapshot.shape}", time.time() - last_prediction)
+        tempi.append(time.time())
+
+        print(f"Snapshot shape: {snapshot.shape}", tempi[-1] - tempi[-2] if len(tempi) > 1 else "N/A")
+        print(snapshot)
         # prediction = model.predict(snapshot)
+
 
 
 if __name__ == "__main__":

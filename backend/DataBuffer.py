@@ -26,4 +26,6 @@ class EEGDataBuffer:
             return np.array(list(self.buffer))
 
     def is_ready(self):
-        return len(self.buffer) == self.window_size
+            """Controlla se il buffer è pieno e pronto per la classificazione."""
+            with self.lock:
+                return len(self.buffer) == self.window_size

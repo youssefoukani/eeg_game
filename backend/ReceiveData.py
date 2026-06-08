@@ -6,6 +6,7 @@ tra snapshot consecutivi, basato sul numero di campioni.
 from pylsl import StreamInlet, resolve_byprop
 from DataBuffer import EEGDataBuffer
 from PreProcessor import pre_process
+from ModelManager import predict
 
 def main():
     # 1. Configurazione
@@ -60,6 +61,10 @@ def main():
                 
                 print(normalized_snapshot)
                 
+                prediction = predict(normalized_snapshot)
+
+                print(f"Predizione: {prediction}")
+
     except KeyboardInterrupt:
         print("\nAcquisizione interrotta dall'utente.")
 

@@ -3,11 +3,26 @@ Programma per leggere un flusso EEG da LSL con un overlap del 50%
 tra snapshot consecutivi, basato sul numero di campioni.
 """
 
-from pylsl import StreamInlet, resolve_byprop
+from pylsl import StreamInlet, resolve_byprop, StreamInfo, StreamOutlet
 from DataBuffer import EEGDataBuffer
 from PreProcessor import pre_process
 from ModelManager import predict
 from osc_sim import send_prediction
+
+SRATE = 250
+CHANNELS = 8
+
+from pylsl import StreamInlet, resolve_byprop, StreamInfo, StreamOutlet
+
+def setup_outlets():
+    """Crea e ritorna gli stream LSL attivi."""
+    info_raw = StreamInfo('Unicorn_Raw', 'EEG', CHANNELS, SRATE, 'float32', 'raw_001')
+    info_proc = StreamInfo('Unicorn_Filtered', 'EEG', CHANNELS, SRATE, 'float32', 'proc_001')
+    info_pred = StreamInfo('Predictions', 'Markers', 1, 0, 'string', 'pred_001')
+    
+    # QUI stava l'errore: devi creare l'Outlet passando l'info
+    return StreamOutlet(info_raw), StreamOutlet(info_proc), StreamOutlet(info_pred)
+
 
 def main():
     # 1. Configurazione
@@ -24,7 +39,7 @@ def main():
 
     inlet = StreamInlet(streams[0])
     eeg_buffer = EEGDataBuffer(window_size=WINDOW_SIZE)
-    
+    outlet_raw, outlet_proc, outlet_pred = setup_outlets()
     # Contatori
     sample_counter = 0
     samples_since_last_snapshot = 0
@@ -36,6 +51,8 @@ def main():
         while True:
             # Recupero singolo campione
             sample, timestamp = inlet.pull_sample()
+
+            outlet_raw.push_sample(sample)
             
             # Aggiornamento buffer e contatori
             eeg_buffer.add_sample(sample)
@@ -61,8 +78,12 @@ def main():
                 normalized_snapshot = pre_process(snapshot)
                 
                 print(normalized_snapshot)
-                
+
+                for sample_filtered in normalized_snapshot:
+                    outlet_proc.push_sample(sample_filtered)  
+
                 prediction = predict(normalized_snapshot)
+                outlet_pred.push_sample([str(prediction)])
 
                 print(f"Predizione: {prediction}")
                 send_prediction(prediction)

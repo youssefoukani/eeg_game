@@ -1,18 +1,11 @@
-"""
-Programma per leggere un flusso EEG da LSL con un overlap del 50%
-tra snapshot consecutivi, basato sul numero di campioni.
-"""
-
 from pylsl import StreamInlet, resolve_byprop, StreamInfo, StreamOutlet
 from DataBuffer import EEGDataBuffer
 from PreProcessor import pre_process
 from ModelManager import predict
-from osc_sim import send_prediction
+from osc_sim import OSC_Sender
 
 SRATE = 250
 CHANNELS = 8
-
-from pylsl import StreamInlet, resolve_byprop, StreamInfo, StreamOutlet
 
 def setup_outlets():
     """Crea e ritorna gli stream LSL attivi."""
@@ -20,7 +13,6 @@ def setup_outlets():
     info_proc = StreamInfo('Unicorn_Filtered', 'EEG', CHANNELS, SRATE, 'float32', 'proc_001')
     info_pred = StreamInfo('Predictions', 'Markers', 1, 0, 'string', 'pred_001')
     
-    # QUI stava l'errore: devi creare l'Outlet passando l'info
     return StreamOutlet(info_raw), StreamOutlet(info_proc), StreamOutlet(info_pred)
 
 
@@ -39,7 +31,11 @@ def main():
 
     inlet = StreamInlet(streams[0])
     eeg_buffer = EEGDataBuffer(window_size=WINDOW_SIZE)
+    
+    osc_sender = OSC_Sender()
+
     outlet_raw, outlet_proc, outlet_pred = setup_outlets()
+    
     # Contatori
     sample_counter = 0
     samples_since_last_snapshot = 0
@@ -59,25 +55,13 @@ def main():
             sample_counter += 1
             samples_since_last_snapshot += 1
 
-            # 3. Logica di estrazione basata sull'overlap
-            # Aspettiamo di aver riempito il buffer la prima volta E 
-            # di aver accumulato almeno 125 nuovi campioni.
+            # 3. Logica di estrazione basata sul numero di campioni
             if eeg_buffer.is_ready() and samples_since_last_snapshot >= SNAP_SAMPLE_FREQ:
                 
                 snapshot = eeg_buffer.get_snapshot()
                 
-                # Resettiamo il contatore dei campioni, NON il buffer intero
-                # (il buffer mantiene i 125 campioni precedenti necessari per l'overlap)
                 samples_since_last_snapshot = 0
-                
-                # Output di verifica
-                # print("-" * 30)
-                # print(f"Snapshot estratto a campione n. {sample_counter}")
-                # print(f"Shape snapshot: {snapshot.shape}")
-                # print(snapshot) 
                 normalized_snapshot = pre_process(snapshot)
-                
-                print(normalized_snapshot)
 
                 for sample_filtered in normalized_snapshot:
                     outlet_proc.push_sample(sample_filtered)  
@@ -86,7 +70,7 @@ def main():
                 outlet_pred.push_sample([str(prediction)])
 
                 print(f"Predizione: {prediction}")
-                send_prediction(prediction)
+                osc_sender.send_prediction(prediction)
 
     except KeyboardInterrupt:
         print("\nAcquisizione interrotta dall'utente.")

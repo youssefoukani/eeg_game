@@ -8,7 +8,7 @@ class EEGDataBuffer:
         self.num_channels = num_channels
         # deque è la struttura perfetta: circolare per design
         self.buffer = deque(maxlen=window_size)
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
 
     def add_sample(self, sample):
         """Aggiunge un campione (lista di 8 valori) al buffer."""
@@ -19,7 +19,7 @@ class EEGDataBuffer:
         """Restituisce una copia del buffer come matrice (window_size x 8)."""
         with self.lock:
             # Verifica che il buffer sia pieno
-            if len(self.buffer) < self.window_size:
+            if not self.is_ready():
                 return None
             
             # Converte in array numpy per il Machine Learning

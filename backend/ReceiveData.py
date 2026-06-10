@@ -4,6 +4,8 @@ from PreProcessor import pre_process
 from ModelManager import predict
 from osc_sim import OSC_Sender
 
+from EvalQuality import eval_quality
+
 SRATE = 250
 CHANNELS = 8
 
@@ -33,6 +35,7 @@ def main():
     eeg_buffer = EEGDataBuffer(window_size=WINDOW_SIZE)
     
     osc_sender = OSC_Sender()
+
 
     outlet_raw, outlet_proc, outlet_pred = setup_outlets()
     
@@ -71,6 +74,9 @@ def main():
 
                 print(f"Predizione: {prediction}")
                 osc_sender.send_prediction(prediction)
+
+                quality = eval_quality(normalized_snapshot)
+                osc_sender.send_quality(quality)  # Simulazione qualità canali
 
     except KeyboardInterrupt:
         print("\nAcquisizione interrotta dall'utente.")

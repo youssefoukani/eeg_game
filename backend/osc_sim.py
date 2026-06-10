@@ -17,3 +17,12 @@ class OSC_Sender:
         except KeyboardInterrupt:
             print("\n[MOCK BACKEND] Simulazione interrotta.")
 
+    def send_quality(self, quality):
+        try:
+            self.client.send_message("/bci/quality", quality)
+            print(f" -> Inviata qualità canali: {quality}")
+            
+        except KeyboardInterrupt:
+            print("\n[MOCK BACKEND] Simulazione interrotta.")
+    
+  

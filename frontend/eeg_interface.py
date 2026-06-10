@@ -24,12 +24,17 @@ class EEGInterface:
         self._prediction: Optional[str] = None
         self._lock       = threading.Lock()
 
+        self._channel_quality = [0] * 8  # Placeholder for channel quality metrics
+
     def connect(self) -> bool:
         if self._connected:
             return True
         try:
             dispatcher = Dispatcher()
             dispatcher.map("/bci/prediction", self._handle_prediction)
+
+            dispatcher.map("/bci/quality",self._handle_quality) #dispatcher per ricevere la qualità dei canali
+
             server = BlockingOSCUDPServer((self.ip, self.port), dispatcher)
             threading.Thread(target=server.serve_forever, daemon=True).start()
             self._connected = True
@@ -48,3 +53,11 @@ class EEGInterface:
         if args and args[0] in ("LEFT", "RIGHT", "NONE"):
             with self._lock:
                 self._prediction = args[0] if args[0] != "NONE" else None
+
+    def _handle_quality(self, address, *args):
+        with self._lock:
+            self._channel_quality = list(args)
+    
+    def get_channel_quality(self):
+        with self._lock:
+            return self._channel_quality.copy()

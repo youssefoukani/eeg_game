@@ -378,42 +378,154 @@ class UserDataForm:
 # ══════════════════════════════════════════════════════════════════════════════
 
 class SignalQualityCheck:
-    """Placeholder — press ENTER or click to continue."""
 
     def __init__(self, screen: pygame.Surface, eeg: EEGInterface):
-        self._screen   = screen
-        self._eeg      = eeg
-        self._fonts    = make_fonts()
-        self._clock    = pygame.time.Clock()
-        self._btn_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
+        self._screen = screen
+        self._eeg = eeg
+        self._fonts = make_fonts()
+        self._clock = pygame.time.Clock()
+        self._btn_rect = pygame.Rect(0, 0, 0, 0)
 
-    def run(self) -> None:
+    def run(self):
+
         self._eeg.connect()
+
         while True:
+
             self._draw()
+
             pygame.display.flip()
             self._clock.tick(FPS)
+
             for ev in pygame.event.get():
+
                 _handle_quit(ev)
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_RETURN:
-                    return
-                if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                    if self._btn_rect.collidepoint(ev.pos):
+
+                if ev.type == pygame.KEYDOWN:
+                    if ev.key == pygame.K_RETURN:
                         return
 
-    def _draw(self) -> None:
+                if ev.type == pygame.MOUSEBUTTONDOWN:
+                    if ev.button == 1 and self._btn_rect.collidepoint(ev.pos):
+                        return
+
+    def _draw(self):
+
         font_b, font, font_s = self._fonts
-        s = self._screen
-        s.fill(C_BG)
-        center_text(s, "SIGNAL QUALITY CHECK",  font_b, C_TEXT,   WINDOW_H // 2 - 40)
-        center_text(s, "[ To be implemented ]", font,   C_WARNING, WINDOW_H // 2)
-        btn_y = WINDOW_H // 2 + 60
-        self._btn_rect = pygame.Rect(WINDOW_W // 2 - 110, btn_y, 220, 36)
-        pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=6)
-        ts = font_b.render("ENTER  —  CONTINUE", True, C_BG)
-        s.blit(ts, (self._btn_rect.centerx - ts.get_width() // 2, self._btn_rect.y + 9))
 
+        self._screen.fill(C_BG)
 
+        center_text(
+            self._screen,
+            "SIGNAL QUALITY CHECK",
+            font_b,
+            C_TEXT,
+            40
+        )
+
+        qualities = self._eeg.get_channel_quality()
+
+        channels = EEGInterface.CHANNELS
+
+        start_x = WINDOW_W // 2 - 240
+        start_y = 120
+
+        box_w = 100
+        box_h = 80
+        gap = 20
+
+        for i, (name, quality) in enumerate(zip(channels, qualities)):
+
+            row = i // 4
+            col = i % 4
+
+            x = start_x + col * (box_w + gap)
+            y = start_y + row * (box_h + 40)
+
+            if quality >= 80:
+                color = (0, 180, 0)
+
+            elif quality >= 50:
+                color = (220, 180, 0)
+
+            else:
+                color = (200, 40, 40)
+
+            pygame.draw.rect(
+                self._screen,
+                color,
+                (x, y, box_w, box_h),
+                border_radius=8
+            )
+
+            label = font.render(name, True, C_TEXT)
+            self._screen.blit(
+                label,
+                (
+                    x + box_w // 2 - label.get_width() // 2,
+                    y + 10
+                )
+            )
+
+            value = font_s.render(
+                f"{quality}%",
+                True,
+                C_TEXT
+            )
+
+            self._screen.blit(
+                value,
+                (
+                    x + box_w // 2 - value.get_width() // 2,
+                    y + 45
+                )
+            )
+
+        ready = all(q >= 80 for q in qualities)
+
+        msg = (
+            "Signal quality OK"
+            if ready
+            else "Adjust headset positioning"
+        )
+
+        color = C_ACCENT if ready else C_WARNING
+
+        center_text(
+            self._screen,
+            msg,
+            font,
+            color,
+            330
+        )
+
+        self._btn_rect = pygame.Rect(
+            WINDOW_W // 2 - 110,
+            400,
+            220,
+            40
+        )
+
+        pygame.draw.rect(
+            self._screen,
+            C_ACCENT,
+            self._btn_rect,
+            border_radius=6
+        )
+
+        txt = font_b.render(
+            "CONTINUE",
+            True,
+            C_BG
+        )
+
+        self._screen.blit(
+            txt,
+            (
+                self._btn_rect.centerx - txt.get_width() // 2,
+                self._btn_rect.centery - txt.get_height() // 2
+            )
+        )
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 3 – Start Screen
 # ══════════════════════════════════════════════════════════════════════════════

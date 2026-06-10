@@ -391,8 +391,9 @@ class SignalQualityCheck:
         self._eeg.connect()
 
         while True:
+            rect=pygame.Rect(0, 150, WINDOW_W, WINDOW_H)
 
-            self._draw()
+            self._draw(rect, show_button=True)  # Usa il metodo di disegno del quality screen senza mostrare il pulsante
 
             pygame.display.flip()
             self._clock.tick(FPS)
@@ -409,30 +410,28 @@ class SignalQualityCheck:
                     if ev.button == 1 and self._btn_rect.collidepoint(ev.pos):
                         return
 
-    def _draw(self):
+    def _draw(self, rect: pygame.Rect = None, show_button: bool = True):
 
         font_b, font, font_s = self._fonts
 
-        self._screen.fill(C_BG)
+        pygame.draw.rect(self._screen, C_BG, rect)
 
-        center_text(
-            self._screen,
-            "SIGNAL QUALITY CHECK",
-            font_b,
-            C_TEXT,
-            40
-        )
-
+        
         qualities = self._eeg.get_channel_quality()
 
         channels = EEGInterface.CHANNELS
 
-        start_x = WINDOW_W // 2 - 240
+        
         start_y = 120
 
-        box_w = 100
-        box_h = 80
-        gap = 20
+        box_w = 80
+        box_h = 60
+        gap = 30
+
+        grid_total_w = (4 * box_w) + (3 * gap)
+
+        start_x = rect.x + (rect.width - grid_total_w) // 2
+        start_y = rect.y + 20
 
         for i, (name, quality) in enumerate(zip(channels, qualities)):
 
@@ -481,51 +480,46 @@ class SignalQualityCheck:
                 )
             )
 
-        ready = all(q >= 80 for q in qualities)
+        
+        if show_button:
 
-        msg = (
-            "Signal quality OK"
-            if ready
-            else "Adjust headset positioning"
-        )
-
-        color = C_ACCENT if ready else C_WARNING
-
-        center_text(
-            self._screen,
-            msg,
-            font,
-            color,
-            330
-        )
-
-        self._btn_rect = pygame.Rect(
-            WINDOW_W // 2 - 110,
-            400,
-            220,
-            40
-        )
-
-        pygame.draw.rect(
-            self._screen,
-            C_ACCENT,
-            self._btn_rect,
-            border_radius=6
-        )
-
-        txt = font_b.render(
-            "CONTINUE",
-            True,
-            C_BG
-        )
-
-        self._screen.blit(
-            txt,
-            (
-                self._btn_rect.centerx - txt.get_width() // 2,
-                self._btn_rect.centery - txt.get_height() // 2
+            center_text(
+                self._screen,
+                "SIGNAL QUALITY CHECK",
+                font_b,
+                C_TEXT,
+                40
             )
-        )
+
+            self._btn_rect = pygame.Rect(
+                WINDOW_W // 2 - 110,
+                400,
+                220,
+                40
+            )
+
+            pygame.draw.rect(
+                self._screen,
+                C_ACCENT,
+                self._btn_rect,
+                border_radius=6
+            )
+
+            txt = font_b.render(
+                "CONTINUE",
+                True,
+                C_BG
+            )
+
+            self._screen.blit(
+                txt,
+                (
+                    self._btn_rect.centerx - txt.get_width() // 2,
+                    self._btn_rect.centery - txt.get_height() // 2
+                )
+            )
+        else:
+            self._btn_rect = pygame.Rect(0, 0, 0, 0)
 # ══════════════════════════════════════════════════════════════════════════════
 # Screen 3 – Start Screen
 # ══════════════════════════════════════════════════════════════════════════════

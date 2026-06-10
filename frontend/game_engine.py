@@ -10,7 +10,7 @@ from game_logic import PlayerController, ObstacleManager, CollisionSystem
 from metrics_logger import MetricsLogger
 from renderer import make_fonts, draw_car, draw_obstacle, draw_road, draw_hud
 from screens import ResultsScreen
-
+from screens import SignalQualityCheck
 
 class GameEngine:
     """Runs one session. Returns True if the user requests a restart."""
@@ -32,6 +32,8 @@ class GameEngine:
         session_start = time.time()
         dash_offset   = 0.0
         obs_speed     = (OBSTACLE_HIT_Y - OBSTACLE_SPAWN_Y) / OBSTACLE_TRAVEL_TIME
+
+        quality_screen = SignalQualityCheck(self._screen, self._eeg)
 
         while True:
             dt        = clock.tick(FPS) / 1000.0
@@ -91,6 +93,22 @@ class GameEngine:
 
             draw_hud(self._screen, self._fonts, remaining,
                      player.lane, metrics.collisions, metrics.avoidances)
+
+            # Definiamo le dimensioni del pannello in modo che contenga comodamente la griglia
+            quality_w = 260  # Ampiezza ideale per le 4 colonne + margini
+            quality_h = 120  # Altezza ideale per contenere 2 o più righe di canali
+            
+            # Lo centriamo perfettamente nella metà destra dello schermo:
+            # La metà destra va da (WINDOW_W // 2) fino a WINDOW_H
+            quality_x = (WINDOW_W // 2) + ((WINDOW_W // 2) - quality_w) // 2
+            
+            # Lo allineiamo verticalmente per essere speculare o armonioso con il resto
+            quality_y = (WINDOW_H * 0.25)   # Centraggio verticale perfetto
+            
+            # Creazione del Rect e disegno
+            quality_rect = pygame.Rect(quality_x, quality_y, quality_w, quality_h)
+            quality_screen._draw(quality_rect, show_button=False)  # Usa il metodo di disegno del quality screen senza mostrare il pulsante
+            
             pygame.display.flip()
 
             if remaining <= 0:
@@ -104,7 +122,7 @@ class GameEngine:
     # ─── 3. FUNZIONE DI DISEGNO DELLA FRECCIA ───
     def draw_cue_arrow(self, direction: str) -> None:
         """Disegna una freccia geometrica o testuale al centro dello schermo."""
-        center_x = WINDOW_W // 2
+        center_x = ROAD_X + ROAD_W // 2
         center_y = WINDOW_H // 4 # Posizionata leggermente sopra il centro geometrico
         
         # Colore vibrante per attirare l'attenzione del soggetto (es. il tuo C_ACCENT o Verde)

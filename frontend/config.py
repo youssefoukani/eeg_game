@@ -22,10 +22,11 @@ SPAWN_MAX            = 4
 
 # Road layout
 ROAD_W       = WINDOW_W // 3
-ROAD_X       = (WINDOW_W - ROAD_W) // 2
+ROAD_X       = WINDOW_W // 6
+PLAYER_Y     = WINDOW_H * 4 // 5
 LANE_W       = ROAD_W // 2
 LANE_CENTERS = [ROAD_X + LANE_W // 2, ROAD_X + LANE_W + LANE_W // 2]
-PLAYER_Y     = WINDOW_H * 4 // 5
+
 
 # Sprites
 CAR_W, CAR_H = 38, 70

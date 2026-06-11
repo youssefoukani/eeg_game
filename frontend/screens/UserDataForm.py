@@ -55,7 +55,10 @@ class UserDataForm:
                     if done:
                         return done
                 elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                    self._handle_click(ev.pos)
+                    # 🔴 MODIFICA: Cattura l'esito del click (se restituisce ParticipantData)
+                    done = self._handle_click(ev.pos)
+                    if done:
+                        return done
 
     # ── input ──────────────────────────────────────────────────────────────────
 
@@ -98,7 +101,7 @@ class UserDataForm:
 
         return None
 
-    def _handle_click(self, pos: tuple) -> None:
+    def _handle_click(self, pos: tuple):
         """Focus a field or toggle a selector option on mouse click."""
         for key, rect in self._rects.items():
             if rect.collidepoint(pos):
@@ -112,8 +115,11 @@ class UserDataForm:
                 elif key.startswith("hand_"):
                     self._focus    = self._F_HAND
                     self._hand_idx = int(key.split("_")[1])
+                # 🔴 MODIFICA: Se clicchi sul pulsante di conferma, avvia la validazione
+                elif key == "submit":
+                    return self._validate()
                 break
-
+        return None
     # ── validation ─────────────────────────────────────────────────────────────
 
     def _validate(self):
@@ -200,6 +206,7 @@ class UserDataForm:
         hint = font_b.render("ENTER  —  CONFIRM", True, C_BG)
         s.blit(hint, (btn.centerx - hint.get_width() // 2, btn.y + 9))
 
+        self._rects["submit"] = btn
         # Keyboard shortcut reminder (subtle)
         y += 50
         center_text(s, "↑ ↓  navigate     ← →  cycle options     click to select",

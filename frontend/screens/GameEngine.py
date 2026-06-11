@@ -112,13 +112,13 @@ class GameEngine:
             pygame.display.flip()
 
             if remaining <= 0:
+                # Nome file fisso per raccogliere tutti i dati del software
                 csv_path = metrics.export_csv(
                     self._participant,
-                    f"session_{self._participant.user_id}_{int(time.time())}.csv",
+                    "all_participants_data.csv", 
                 )
                 metrics.print_report()
                 return ResultsScreen(self._screen, metrics, self._participant, csv_path).run()
-
     # ─── 3. FUNZIONE DI DISEGNO DELLA FRECCIA ───
     def draw_cue_arrow(self, direction: str) -> None:
         """Disegna una freccia geometrica o testuale al centro dello schermo."""
@@ -154,3 +154,5 @@ class GameEngine:
         pygame.draw.polygon(self._screen, arrow_color, points)
         # Un piccolo bordo scuro opzionale per staccare dallo sfondo
         pygame.draw.polygon(self._screen, C_BG, points, 2)
+
+        

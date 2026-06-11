@@ -17,14 +17,23 @@ class StartScreen:
         self._btn_rect    = pygame.Rect(0, 0, 0, 0)
 
     def run(self) -> None:
+        # Inizializziamo la variabile per evitare potenziali bug se l'utente 
+        # muove/clicca il mouse nell'istante esatto in cui si avvia la schermata
+        self._btn_rect = pygame.Rect(0, 0, 0, 0)
+        
         while True:
             self._draw()
             pygame.display.flip()
             self._clock.tick(FPS)
+            
             for ev in pygame.event.get():
                 _handle_quit(ev)
+                
+                # 1. Gestione della tastiera (Tasto INVIO)
                 if ev.type == pygame.KEYDOWN and ev.key == pygame.K_RETURN:
                     return
+                    
+                # 2. Gestione del mouse (Click sinistro sul pulsante)
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     if self._btn_rect.collidepoint(ev.pos):
                         return

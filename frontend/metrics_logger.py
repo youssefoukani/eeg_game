@@ -1,7 +1,7 @@
 # ─── metrics_logger.py ────────────────────────────────────────────────────────
 import csv
 from typing import Optional
-
+import os
 from models import MetricEvent, Obstacle, ParticipantData
 
 
@@ -35,9 +35,6 @@ class MetricsLogger:
 
     # ── computed ──────────────────────────────────────────────────────────────
 
-    @property
-    def avg_response_time(self) -> Optional[float]:
-        return sum(self._rts) / len(self._rts) if self._rts else None
 
     @property
     def accuracy(self) -> float:
@@ -47,29 +44,40 @@ class MetricsLogger:
     # ── output ────────────────────────────────────────────────────────────────
 
     def export_csv(self, participant: ParticipantData, path: str) -> str:
-        with open(path, "w", newline="") as f:
+        # Controlla se il file esiste già e non è vuoto
+        file_exists = os.path.exists(path) and os.path.getsize(path) > 0
+        
+        # Apri il file in modalità "append" ('a') per non sovrascrivere
+        with open(path, "a", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["user_id", "age", "sex", "dominant_hand",
-                        "timestamp", "event_type", "player_lane",
-                        "obstacle_lane", "response_time_s"])
-            for e in self.events:
+            
+            # Scrivi l'intestazione SOLO se il file è nuovo o vuoto
+            if not file_exists:
                 w.writerow([
-                    participant.user_id, participant.age,
-                    participant.sex, participant.dominant_hand,
-                    f"{e.timestamp:.3f}", e.event_type, e.player_lane,
-                    e.obstacle_lane if e.obstacle_lane is not None else "",
-                    f"{e.response_time:.3f}" if e.response_time is not None else "",
+                    "user_id", "age", "sex", "dominant_hand", 
+                    "collisions", "avoidances", "lane_changes", "accuracy"
                 ])
+                
+            # Scrive un'unica riga con le metriche globali del partecipante
+            # (Assicurati che self.collisions, self.avoidances e self.accuracy esistano dentro l'oggetto metrics)
+            w.writerow([
+                participant.user_id, 
+                participant.age,
+                participant.sex, 
+                participant.dominant_hand,
+                self.collisions,
+                self.avoidances,
+                self.lane_changes,
+                f"{self.accuracy:.2f}" if isinstance(self.accuracy, float) else self.accuracy
+            ])
+                
         return path
-
     def print_report(self) -> None:
-        art = self.avg_response_time
         print("\n" + "═" * 50)
         print(f"  Total obstacles   : {self.collisions + self.avoidances}")
         print(f"  Collisions        : {self.collisions}")
         print(f"  Successful avoids : {self.avoidances}")
         print(f"  Accuracy          : {self.accuracy:.1f}%")
-        if art is not None:
-            print(f"  Avg response time : {art:.2f} s")
+        
         print(f"  Lane changes      : {self.lane_changes}")
         print("═" * 50)

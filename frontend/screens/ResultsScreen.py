@@ -66,7 +66,7 @@ class ResultsScreen:
     def _build_lines(self) -> list:
         font_b, font, _ = self._fonts
         m   = self._metrics
-        art = m.avg_response_time
+        
         return [
             ("SESSION COMPLETE",                                  font_b, C_TEXT),
             ("",                                                  font,   C_MUTED),
@@ -77,7 +77,7 @@ class ResultsScreen:
             (f"Successful avoids  {m.avoidances}",                font,   C_ACCENT),
             (f"Accuracy           {m.accuracy:.1f}%",             font_b, C_ACCENT if m.accuracy >= 70 else C_WARNING),
             ("",                                                  font,   C_MUTED),
-            (f"Avg response time  {art:.2f} s" if art else "Avg response time  —", font, C_TEXT),
+            
             (f"Lane changes       {m.lane_changes}",              font,   C_TEXT),
             ("",                                                  font,   C_MUTED),
             (f"CSV → {self._csv_path}",                           font,   C_MUTED),

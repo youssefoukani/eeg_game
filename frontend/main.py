@@ -15,8 +15,7 @@ import pygame
 
 from config import WINDOW_W, WINDOW_H
 from eeg_interface import EEGInterface
-from screens import HeadsetGuide, UserDataForm, SignalQualityCheck, FixationCross, StartScreen
-from game_engine import GameEngine
+from screens import HeadsetGuide, UserDataForm, SignalQualityCheck, FixationCross, StartScreen, GameEngine
 
 
 def main() -> None:

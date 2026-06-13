@@ -17,8 +17,6 @@ class StartScreen:
         self._btn_rect    = pygame.Rect(0, 0, 0, 0)
 
     def run(self) -> None:
-        # Inizializziamo la variabile per evitare potenziali bug se l'utente 
-        # muove/clicca il mouse nell'istante esatto in cui si avvia la schermata
         self._btn_rect = pygame.Rect(0, 0, 0, 0)
         
         while True:
@@ -48,31 +46,39 @@ class StartScreen:
         center_text(s, "Motor Imagery Prototype", font_s, C_MUTED, y); y += 36
         divider(s, y); y += 20
 
+        # ── Partecipante ──────────────────────────────────────────
         for line in (
-            f"Participant  : {p.user_id}",
-            f"Age          : {p.age}    Sex: {p.sex}",
+            f"Participant: {p.user_id} | Age: {p.age} | Sex: {p.sex}",
             f"Dominant hand: {p.dominant_hand}",
         ):
-            s.blit(font_s.render(line, True, C_MUTED), (80, y)); y += 22
+            center_text(s, line, font_s, C_MUTED, y); y += 26
         y += 12; divider(s, y); y += 20
 
-        for label, val in (
-            ("Duration",      f"{MATCH_DURATION // 60} min  ({MATCH_DURATION} s)"),
-            ("Lanes",         "LEFT   and   RIGHT"),
-            ("Obstacle time", f"{OBSTACLE_TRAVEL_TIME:.1f} s approach window"),
-            ("Collisions",    "counted — game continues"),
-            ("Controls",      "← Left Arrow    → Right Arrow"),
-        ):
-            lbl_s = font_s.render(f"{label:<16}", True, C_MUTED)
-            val_s = font.render(val, True, C_TEXT)
-            s.blit(lbl_s, (80, y))
-            s.blit(val_s, (80 + lbl_s.get_width(), y)); y += 28
+        # ── Regole / parametri──────────────────────────────────
+        rules = [
+            ("Duration", f"{MATCH_DURATION // 60} min ({MATCH_DURATION} s)"),
+            ("Lanes", "LEFT and RIGHT"),
+            ("Obstacle time", f"{OBSTACLE_TRAVEL_TIME:.1f} s window"),
+            ("Collisions", "counted — game continues"),
+            ("Controls", "← Left  |  → Right"),
+        ]
+        
+        for label, val in rules:
+            text_line = f"{label}: {val}"
+            center_text(s, text_line, font, C_TEXT, y); y += 30
 
         y += 10; divider(s, y); y += 20
         center_text(s, "Switch lanes BEFORE the obstacle reaches you.", font_s, C_MUTED, y); y += 22
         center_text(s, "No need for fast reflexes — plan ahead.",        font_s, C_MUTED, y); y += 36
 
-        self._btn_rect = pygame.Rect(WINDOW_W // 2 - 110, y, 220, 40)
-        pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=6)
-        ts = font_b.render("ENTER  —  START", True, C_BG)
-        s.blit(ts, (self._btn_rect.centerx - ts.get_width() // 2, self._btn_rect.y + 11))
+        # ── Pulsante Adattivo ─────────────────────────────────────────────────
+        from renderer import draw_button
+        
+        # Disegnamo il bottone centrato e adattato al testo
+        self._btn_rect = draw_button(
+            s, 
+            "ENTER  —  START", 
+            font_b, 
+            (WINDOW_W // 2, y + 20), 
+            padding=30
+        )

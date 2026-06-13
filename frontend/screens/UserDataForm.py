@@ -164,7 +164,7 @@ class UserDataForm:
             s.blit(font.render(self._texts[key] + cursor, True, C_TEXT), (box.x + 10, box.y + 8))
 
             self._rects[key] = box
-            y += 50
+            y += 40
 
         # ── selector helper ───────────────────────────────────────────────────
         def draw_selector(options, sel_idx, focus_idx, prefix, y_pos):
@@ -194,21 +194,27 @@ class UserDataForm:
                (field_x, y)); y += 22
         draw_selector(self._HAND, self._hand_idx, self._F_HAND, "hand", y); y += 54
 
-        # ── footer ────────────────────────────────────────────────────────────
-        divider(s, y); y += 16
+# ── footer ────────────────────────────────────────────────────────────
+        # Mettiamo il footer a una distanza fissa di 100px dall'ultimo selettore
+        # invece di ancorarlo al fondo dello schermo
+        y += 20 
+        divider(s, y); y += 20
 
         if self._error:
-            center_text(s, self._error, font_s, C_WARNING, y); y += 26
+            center_text(s, self._error, font_s, C_WARNING, y); y += 30
 
-        # ENTER button hint
-        btn = pygame.Rect(WINDOW_W // 2 - 110, y, 220, 36)
-        pygame.draw.rect(s, C_ACCENT, btn, border_radius=6)
-        hint = font_b.render("ENTER  —  CONFIRM", True, C_BG)
-        s.blit(hint, (btn.centerx - hint.get_width() // 2, btn.y + 9))
-
-        self._rects["submit"] = btn
-        # Keyboard shortcut reminder (subtle)
-        y += 50
-        center_text(s, "↑ ↓  navigate     ← →  cycle options     click to select",
-                    font_s, C_MUTED, y)
-
+        # ── Pulsante Adattivo ─────────────────────────────────────────────────
+        from renderer import draw_button 
+        
+        confirm_btn_rect = draw_button(
+            s, 
+            "ENTER — CONFIRM", 
+            font_b, 
+            (WINDOW_W // 2, y + 25), 
+            padding=30
+        )
+        self._rects["submit"] = confirm_btn_rect
+        
+        # Shortcut reminder più vicino al bottone
+        center_text(s, "↑ ↓ navigate  |  ← → cycle  |  click to select",
+                    font_s, C_MUTED, y + 65)

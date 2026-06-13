@@ -14,7 +14,7 @@ class HeadsetGuide:
         guide_bottom.png (lower half)
     """
 
-    _IMG_FILES = ("/Users/youssefouk/Desktop/racing_game/frontend/img/guide_top.png", "/Users/youssefouk/Desktop/racing_game/frontend/img/guide_bottom.png")
+    _IMG_FILES = ("../img/guide_bottom.png", "../img/guide_top.png")
 
     def __init__(self, screen: pygame.Surface):
         self._screen   = screen
@@ -53,7 +53,6 @@ class HeadsetGuide:
         font_b, font, font_s = self._fonts
         s = self._screen
 
-        # ── background ─────────────────────────────────────────────────────────
         s.fill(C_BG)
 
         # ── header card ────────────────────────────────────────────────────────
@@ -137,19 +136,16 @@ class HeadsetGuide:
             s.blit(missing, (box.centerx - missing.get_width() // 2, cy + 30))
             s.blit(detail,  (box.centerx - detail.get_width()  // 2, cy + 58))
 
-        # ── footer button ──────────────────────────────────────────────────────
-        BTN_W, BTN_H = 280, 44
-        btn_y = WINDOW_H * 7/8
-        self._btn_rect = pygame.Rect(WINDOW_W // 2 - BTN_W // 2, btn_y, BTN_W, BTN_H)
-
-        # Glow effect — slightly larger rect in accent colour at low alpha
-        glow = pygame.Surface((BTN_W + 12, BTN_H + 12), pygame.SRCALPHA)
-        pygame.draw.rect(glow, (*C_ACCENT, 40), glow.get_rect(), border_radius=10)
-        s.blit(glow, (self._btn_rect.x - 6, self._btn_rect.y - 6))
-
-        pygame.draw.rect(s, C_ACCENT, self._btn_rect, border_radius=8)
-
-        btn_font = pygame.font.SysFont("monospace", 16, bold=True)
-        ts = btn_font.render("ENTER  —  CONTINUE", True, C_BG)
-        s.blit(ts, (self._btn_rect.centerx - ts.get_width()  // 2,
-                    self._btn_rect.centery - ts.get_height() // 2))
+    # ── footer button ──────────────────────────────────────────    
+        # 1. Definizione font e testo
+        btn_font = pygame.font.SysFont("arial", 18, bold=True) # Usa font leggibile
+        btn_text = "ENTER — CONTINUE"
+        
+        # 2. Chiama la funzione adattiva che abbiamo creato in renderer.py
+        from renderer import draw_button 
+        
+        # Posizione desiderata (centro orizzontale, 7/8 dell'altezza)
+        center_pos = (WINDOW_W // 2, int(WINDOW_H * 7/8))
+        
+        # 3. Disegna il bottone e ottieni il rettangolo di collisione
+        self._btn_rect = draw_button(s, btn_text, btn_font, center_pos, padding=30)

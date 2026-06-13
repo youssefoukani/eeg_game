@@ -3,8 +3,7 @@ import pygame
 from config import *
 from models import ParticipantData
 from metrics_logger import MetricsLogger
-from renderer import make_fonts
-
+from renderer import make_fonts, draw_button
 from .utils import _handle_quit
 
 class ResultsScreen:
@@ -35,21 +34,27 @@ class ResultsScreen:
                     self._screen.blit(ts, (WINDOW_W // 2 - ts.get_width() // 2, y))
                 y += 36 if fnt is font_b else 30
 
-            # Draw clickable buttons
-            gap = 20
-            total_w = self._BTN_W * 2 + gap
-            bx = WINDOW_W // 2 - total_w // 2
-            self._btn_restart = pygame.Rect(bx,                    y, self._BTN_W, self._BTN_H)
-            self._btn_quit    = pygame.Rect(bx + self._BTN_W + gap, y, self._BTN_W, self._BTN_H)
-
-            pygame.draw.rect(self._screen, C_ACCENT,  self._btn_restart, border_radius=6)
-            pygame.draw.rect(self._screen, C_WARNING, self._btn_quit,    border_radius=6)
-
-            for btn, label in ((self._btn_restart, "ENTER — RESTART"),
-                               (self._btn_quit,    "Q  —  QUIT")):
-                ts = font_b.render(label, True, C_BG)
-                self._screen.blit(ts, (btn.centerx - ts.get_width() // 2, btn.y + 11))
-
+            gap = 60 
+            y_pos = y + 25
+            
+            # 1. Pulsante RESTART
+            self._btn_restart = draw_button(
+                self._screen, "ENTER — RESTART", font_b, 
+                (WINDOW_W // 2 - (self._BTN_W // 2) - (gap // 2), y_pos), 
+                padding=20
+            )
+            
+            # 2. Pulsante QUIT
+            self._btn_quit = draw_button(
+                self._screen, "Q  —  QUIT", font_b, 
+                (WINDOW_W // 2 + (self._BTN_W // 2) + (gap // 2), y_pos), 
+                padding=20
+            )
+            pygame.draw.rect(self._screen, C_WARNING, self._btn_quit, border_radius=8)
+            
+            ts_quit = font_b.render("Q  —  QUIT", True, C_BG)
+            self._screen.blit(ts_quit, (self._btn_quit.centerx - ts_quit.get_width() // 2, 
+                                        self._btn_quit.centery - ts_quit.get_height() // 2))
             pygame.display.flip()
             self._clock.tick(30)
 

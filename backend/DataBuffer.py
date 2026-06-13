@@ -6,8 +6,7 @@ class EEGDataBuffer:
     def __init__(self, window_size=250, num_channels=8):
         self.window_size = window_size
         self.num_channels = num_channels
-        # deque è la struttura perfetta: circolare per design
-        self.buffer = deque(maxlen=window_size)
+        self.buffer = deque(maxlen=window_size) #buffer circolare
         self.lock = threading.RLock()
 
     def add_sample(self, sample):

@@ -85,32 +85,35 @@ class SignalQualityCheck:
                 border_radius=8
             )
 
+        for i, (name, quality) in enumerate(zip(channels, qualities)):
+            row = i // 4
+            col = i % 4
+
+            x = start_x + col * (box_w + gap)
+            y = start_y + row * (box_h + 40)
+            
+            # Rettangolo del box
+            box_rect = pygame.Rect(x, y, box_w, box_h)
+
+            # Colore basato sulla qualità
+            color = (0, 180, 0) if quality >= 80 else ((220, 180, 0) if quality >= 50 else (200, 40, 40))
+
+            pygame.draw.rect(self._screen, color, box_rect, border_radius=8)
+
+            # ── CENTRATURA MIGLIORATA ──────────────────────────────────────────
+            # Nome canale (più in alto)
             label = font.render(name, True, C_TEXT)
-            self._screen.blit(
-                label,
-                (
-                    x + box_w // 2 - label.get_width() // 2,
-                    y + 10
-                )
-            )
+            label_rect = label.get_rect(center=(box_rect.centerx, box_rect.top + 20))
+            self._screen.blit(label, label_rect)
 
-            value = font_s.render(
-                f"{quality}%",
-                True,
-                C_TEXT
-            )
-
-            self._screen.blit(
-                value,
-                (
-                    x + box_w // 2 - value.get_width() // 2,
-                    y + 45
-                )
-            )
+            # Valore percentuale (più in basso)
+            value = font_s.render(f"{quality}%", True, C_TEXT)
+            value_rect = value.get_rect(center=(box_rect.centerx, box_rect.bottom - 20))
+            self._screen.blit(value, value_rect)
 
         
         if show_button:
-
+            # Titolo della pagina
             center_text(
                 self._screen,
                 "SIGNAL QUALITY CHECK",
@@ -119,32 +122,16 @@ class SignalQualityCheck:
                 40
             )
 
-            self._btn_rect = pygame.Rect(
-                WINDOW_W // 2 - 110,
-                400,
-                220,
-                40
-            )
-
-            pygame.draw.rect(
-                self._screen,
-                C_ACCENT,
-                self._btn_rect,
-                border_radius=6
-            )
-
-            txt = font_b.render(
-                "CONTINUE",
-                True,
-                C_BG
-            )
-
-            self._screen.blit(
-                txt,
-                (
-                    self._btn_rect.centerx - txt.get_width() // 2,
-                    self._btn_rect.centery - txt.get_height() // 2
-                )
+            # ── Pulsante Adattivo ─────────────────────────────────────────────
+            from renderer import draw_button
+            
+            # Disegna il bottone centrato (posizione y=450 per dargli spazio sotto la griglia)
+            self._btn_rect = draw_button(
+                self._screen, 
+                "CONTINUE", 
+                font_b, 
+                (WINDOW_W // 2, 450), 
+                padding=30
             )
         else:
             self._btn_rect = pygame.Rect(0, 0, 0, 0)

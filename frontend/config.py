@@ -36,15 +36,11 @@ OBSTACLE_SPAWN_Y = 60
 OBSTACLE_HIT_Y   = PLAYER_Y - CAR_H
 
 # Colours
-C_BG           = (18,  18,  22)
 C_ROAD         = (30,  30,  36)
 C_LANE_DIV     = (55,  55,  65)
 C_PLAYER       = (220, 220, 230)
 C_OBSTACLE     = (200, 60,  60)
 C_OBSTACLE_HIT = (255, 80,  80)
-C_TEXT         = (200, 200, 210)
-C_MUTED        = (100, 100, 115)
-C_ACCENT       = (80,  160, 255)
 C_WARNING      = (255, 160, 50)
 C_OK           = (80,  210, 120)
 C_HUD_BG       = (24,  24,  30)
@@ -54,3 +50,21 @@ C_INPUT_ACTIVE = (40,  40,  55)
 C_INPUT_BORDER = (60,  60,  80)
 C_INPUT_SEL    = (60,  100, 180)
 C_CUE = (0, 255, 0)
+
+C_BG      = (20, 20, 20)      # Sfondo nero
+C_TEXT    = (255, 255, 255)   # Testo bianco
+C_MUTED   = (180, 180, 180)   # Grigio chiaro per i testi secondari
+C_ACCENT  = (0, 200, 255)     # Azzurro per risaltare
+
+FONT_MAIN = "arial" 
+FONT_CODE = "consolas"
+
+# Definizione dimensioni (Small, Medium, Large, Header)
+SIZE_XS   = 12
+SIZE_S    = 16
+SIZE_M    = 20
+SIZE_L    = 28
+SIZE_XL   = 40
+
+# --- UI CONSTANTS ---
+BORDER_RADIUS = 8

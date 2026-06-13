@@ -95,8 +95,8 @@ class GameEngine:
                      player.lane, metrics.collisions, metrics.avoidances)
 
             # Definiamo le dimensioni del pannello in modo che contenga comodamente la griglia
-            quality_w = 260  # Ampiezza ideale per le 4 colonne + margini
-            quality_h = 120  # Altezza ideale per contenere 2 o più righe di canali
+            quality_w = 600  # Ampiezza ideale per le 4 colonne + margini
+            quality_h = WINDOW_H//3-85  
             
             # Lo centriamo perfettamente nella metà destra dello schermo:
             # La metà destra va da (WINDOW_W // 2) fino a WINDOW_H
@@ -107,7 +107,9 @@ class GameEngine:
             
             # Creazione del Rect e disegno
             quality_rect = pygame.Rect(quality_x, quality_y, quality_w, quality_h)
-            quality_screen._draw(quality_rect, show_button=False)  # Usa il metodo di disegno del quality screen senza mostrare il pulsante
+
+            # Disegna il widget completo della qualità EEG dentro la card
+            quality_screen._draw(quality_rect, show_button=False)
             
             pygame.display.flip()
 

@@ -80,7 +80,6 @@ class ResultsScreen:
             (f"Total obstacles    {m.collisions + m.avoidances}", font,   C_TEXT),
             (f"Collisions         {m.collisions}",                font,   C_WARNING if m.collisions else C_TEXT),
             (f"Successful avoids  {m.avoidances}",                font,   C_ACCENT),
-            (f"Accuracy           {m.accuracy:.1f}%",             font_b, C_ACCENT if m.accuracy >= 70 else C_WARNING),
             ("",                                                  font,   C_MUTED),
             
             (f"Lane changes       {m.lane_changes}",              font,   C_TEXT),

@@ -8,9 +8,8 @@ from eeg_interface import EEGInterface
 from input_manager import InputManager
 from game_logic import PlayerController, ObstacleManager, CollisionSystem
 from metrics_logger import MetricsLogger
-from renderer import make_fonts, draw_car, draw_obstacle, draw_road, draw_hud
+from renderer import make_fonts, draw_car, draw_obstacle, draw_road
 from screens import ResultsScreen
-from screens import SignalQualityCheck
 
 class GameEngine:
     """Runs one session. Returns True if the user requests a restart."""
@@ -33,7 +32,6 @@ class GameEngine:
         dash_offset   = 0.0
         obs_speed     = (OBSTACLE_HIT_Y - OBSTACLE_SPAWN_Y) / OBSTACLE_TRAVEL_TIME
 
-        quality_screen = SignalQualityCheck(self._screen, self._eeg)
 
         while True:
             dt        = clock.tick(FPS) / 1000.0
@@ -91,26 +89,9 @@ class GameEngine:
             if cue_direction:
                 self.draw_cue_arrow(cue_direction)
 
-            draw_hud(self._screen, self._fonts, remaining,
-                     player.lane, metrics.collisions, metrics.avoidances)
+            # draw_hud(self._screen, self._fonts, remaining,
+            #          player.lane, metrics.collisions, metrics.avoidances)
 
-            # Definiamo le dimensioni del pannello in modo che contenga comodamente la griglia
-            quality_w = 600  # Ampiezza ideale per le 4 colonne + margini
-            quality_h = WINDOW_H//3-85  
-            
-            # Lo centriamo perfettamente nella metà destra dello schermo:
-            # La metà destra va da (WINDOW_W // 2) fino a WINDOW_H
-            quality_x = (WINDOW_W // 2) + ((WINDOW_W // 2) - quality_w) // 2
-            
-            # Lo allineiamo verticalmente per essere speculare o armonioso con il resto
-            quality_y = (WINDOW_H * 0.25)   # Centraggio verticale perfetto
-            
-            # Creazione del Rect e disegno
-            quality_rect = pygame.Rect(quality_x, quality_y, quality_w, quality_h)
-
-            # Disegna il widget completo della qualità EEG dentro la card
-            quality_screen._draw(quality_rect, show_button=False)
-            
             pygame.display.flip()
 
             if remaining <= 0:

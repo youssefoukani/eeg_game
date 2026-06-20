@@ -17,12 +17,12 @@ LANE_RIGHT = 1
 
 # Obstacle timing
 OBSTACLE_TRAVEL_TIME = 5   # seconds spawn → collision
-SPAWN_MIN            = 3   # seconds between obstacles
-SPAWN_MAX            = 4
+SPAWN_MIN            = 18   # seconds between obstacles
+SPAWN_MAX            = 20
 
 # Road layout
 ROAD_W       = WINDOW_W // 3
-ROAD_X       = WINDOW_W // 6
+ROAD_X       = WINDOW_W // 3
 PLAYER_Y     = WINDOW_H * 4 // 5
 LANE_W       = ROAD_W // 2
 LANE_CENTERS = [ROAD_X + LANE_W // 2, ROAD_X + LANE_W + LANE_W // 2]

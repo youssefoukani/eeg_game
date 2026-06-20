@@ -56,37 +56,6 @@ def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
         pygame.draw.line(surf, C_LANE_DIV, (cx, y), (cx, y + dash_h), 1)
         y += cycle
 
-def draw_hud(surf: pygame.Surface, fonts: tuple, remaining: float,
-             player_lane: int, collisions: int, avoidances: int) -> None:
-    font_b, font, font_s = fonts
-    
-    # Header HUD
-    pygame.draw.rect(surf, (10, 10, 15), (0, 0, WINDOW_W, 55))
-    pygame.draw.line(surf, C_ACCENT, (0, 55), (WINDOW_W, 55), 2)
-
-    # Timer
-    mins, secs = divmod(int(remaining), 60)
-    center_text(surf, f"{mins:02d}:{secs:02d}", font_b,
-                C_WARNING if remaining < 15 else C_TEXT, 15)
-
-    # Errori
-    err_col = C_WARNING if collisions > 0 else (150, 150, 150)
-    render_shadow_text(surf, f"ERR: {collisions}", font, err_col, (20, 18))
-
-    # Precisione
-    total = collisions + avoidances
-    acc = (avoidances / total * 100) if total else 100.0
-    acc_text = f"ACC: {acc:.0f}%"
-    acc_surf = font.render(acc_text, True, C_ACCENT)
-    render_shadow_text(surf, acc_text, font, C_ACCENT, (WINDOW_W - acc_surf.get_width() - 20, 18))
-
-    # Indicatori corsia
-    for lane, label in enumerate(("LEFT", "RIGHT")):
-        col = C_ACCENT if lane == player_lane else (150, 150, 150)
-        ls = font.render(label, True, col)
-        pygame.draw.rect(surf, (0, 0, 0), (LANE_CENTERS[lane] - 35, surf.get_height() - 35, 70, 25), border_radius=4)
-        surf.blit(ls, (LANE_CENTERS[lane] - ls.get_width() // 2, surf.get_height() - 32))
-
 def draw_button(surf: pygame.Surface, text: str, font, pos_center: tuple, padding: int = 20) -> pygame.Rect:
     # Renderizza il testo per misurarlo
     text_surf = font.render(text, True, (255, 255, 255))

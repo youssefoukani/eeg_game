@@ -36,11 +36,7 @@ class MetricsLogger:
     # ── computed ──────────────────────────────────────────────────────────────
 
 
-    @property
-    def accuracy(self) -> float:
-        total = self.collisions + self.avoidances
-        return (self.avoidances / total * 100) if total else 100.0
-
+    
     # ── output ────────────────────────────────────────────────────────────────
 
     def export_csv(self, participant: ParticipantData, path: str) -> str:
@@ -55,11 +51,11 @@ class MetricsLogger:
             if not file_exists:
                 w.writerow([
                     "user_id", "age", "sex", "dominant_hand", 
-                    "collisions", "avoidances", "lane_changes", "accuracy"
+                    "collisions", "avoidances", "lane_changes"
                 ])
                 
             # Scrive un'unica riga con le metriche globali del partecipante
-            # (Assicurati che self.collisions, self.avoidances e self.accuracy esistano dentro l'oggetto metrics)
+            # (Assicurati che self.collisions, self.avoidances e esistano dentro l'oggetto metrics)
             w.writerow([
                 participant.user_id, 
                 participant.age,
@@ -68,7 +64,6 @@ class MetricsLogger:
                 self.collisions,
                 self.avoidances,
                 self.lane_changes,
-                f"{self.accuracy:.2f}" if isinstance(self.accuracy, float) else self.accuracy
             ])
                 
         return path
@@ -77,7 +72,6 @@ class MetricsLogger:
         print(f"  Total obstacles   : {self.collisions + self.avoidances}")
         print(f"  Collisions        : {self.collisions}")
         print(f"  Successful avoids : {self.avoidances}")
-        print(f"  Accuracy          : {self.accuracy:.1f}%")
         
         print(f"  Lane changes      : {self.lane_changes}")
         print("═" * 50)

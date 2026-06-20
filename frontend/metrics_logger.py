@@ -33,9 +33,6 @@ class MetricsLogger:
     def _log_rt(self, t: float, obs: Obstacle) -> None:
         self._rts.append(t - obs.spawned_at)
 
-    # ── computed ──────────────────────────────────────────────────────────────
-
-
     
     # ── output ────────────────────────────────────────────────────────────────
 
@@ -50,7 +47,7 @@ class MetricsLogger:
             # Scrivi l'intestazione SOLO se il file è nuovo o vuoto
             if not file_exists:
                 w.writerow([
-                    "user_id", "age", "sex", "dominant_hand", 
+                    "user_id", "age", "sex", "dominant_hand", "educational_level",
                     "collisions", "avoidances", "lane_changes"
                 ])
                 
@@ -61,6 +58,7 @@ class MetricsLogger:
                 participant.age,
                 participant.sex, 
                 participant.dominant_hand,
+                participant.educational_level,
                 self.collisions,
                 self.avoidances,
                 self.lane_changes,

@@ -10,6 +10,7 @@ from game_logic import PlayerController, ObstacleManager, CollisionSystem
 from metrics_logger import MetricsLogger
 from renderer import make_fonts, draw_car, draw_obstacle, draw_road
 from screens import ResultsScreen
+from renderer import center_text
 
 class GameEngine:
     """Runs one session. Returns True if the user requests a restart."""
@@ -122,6 +123,7 @@ class GameEngine:
                 (center_x - 10, center_y + 15), # Inizio punta inf
                 (center_x + 30, center_y + 15), # Coda inferiore
             ]
+            center_text(self._screen, "LEFT", self._fonts[0], C_TEXT,   42)
         else: # RIGHT
             # Disegno di una freccia verso destra
             points = [
@@ -133,7 +135,10 @@ class GameEngine:
                 (center_x + 10, center_y + 15),
                 (center_x - 30, center_y + 15),
             ]
+            center_text(self._screen, "RIGHT", self._fonts[0], C_TEXT,   42)
             
+            
+        
         pygame.draw.polygon(self._screen, arrow_color, points)
         # Un piccolo bordo scuro opzionale per staccare dallo sfondo
         pygame.draw.polygon(self._screen, C_BG, points, 2)

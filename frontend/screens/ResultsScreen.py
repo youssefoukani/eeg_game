@@ -1,5 +1,4 @@
 import pygame
-
 from config import *
 from models import ParticipantData
 from metrics_logger import MetricsLogger
@@ -78,9 +77,8 @@ class ResultsScreen:
             (f"Participant        {self._participant.user_id}",   font,   C_TEXT),
             ("",                                                  font,   C_MUTED),
             (f"Total obstacles    {m.collisions + m.avoidances}", font,   C_TEXT),
-            (f"Collisions         {m.collisions}",                font,   C_WARNING if m.collisions else C_TEXT),
+            (f"Collisions         {m.collisions}",                font,   C_WARNING),
             (f"Successful avoids  {m.avoidances}",                font,   C_ACCENT),
-            ("",                                                  font,   C_MUTED),
             
             (f"Lane changes       {m.lane_changes}",              font,   C_TEXT),
             ("",                                                  font,   C_MUTED),

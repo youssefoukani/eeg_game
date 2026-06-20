@@ -26,9 +26,10 @@ class UserDataForm:
     _FIELDS = ["user_id", "age"]
     _SEX    = ["M", "F", "Other"]
     _HAND   = ["Right", "Left"]
+    _EDU    = ["Middle School", "High School Diploma", "Degree"]
 
     # Field index constants for clarity
-    _F_UID, _F_AGE, _F_SEX, _F_HAND = 0, 1, 2, 3
+    _F_UID, _F_AGE, _F_SEX, _F_HAND, _F_EDU = 0, 1, 2, 3, 4
 
     def __init__(self, screen: pygame.Surface):
         self._screen  = screen
@@ -37,6 +38,7 @@ class UserDataForm:
         self._texts   = {"user_id": "", "age": ""}
         self._sex_idx = 0
         self._hand_idx= 0
+        self._edu_idx = 0
         self._focus   = 0
         self._error   = ""
 
@@ -67,9 +69,9 @@ class UserDataForm:
 
         # Navigation
         if k in (pygame.K_DOWN, pygame.K_TAB) and not (k == pygame.K_TAB and (pygame.key.get_mods() & pygame.KMOD_SHIFT)):
-            self._focus = (self._focus + 1) % 4
+            self._focus = (self._focus + 1) % 5
         elif k == pygame.K_UP or (k == pygame.K_TAB and pygame.key.get_mods() & pygame.KMOD_SHIFT):
-            self._focus = (self._focus - 1) % 4
+            self._focus = (self._focus - 1) % 5
 
         # Confirm
         elif k == pygame.K_RETURN:
@@ -81,11 +83,15 @@ class UserDataForm:
                 self._sex_idx  = (self._sex_idx  - 1) % len(self._SEX)
             elif self._focus == self._F_HAND:
                 self._hand_idx = (self._hand_idx - 1) % len(self._HAND)
+            elif self._focus == self._F_EDU:
+                self._edu_idx = (self._edu_idx - 1) % len(self._EDU)
         elif k == pygame.K_RIGHT:
             if self._focus == self._F_SEX:
                 self._sex_idx  = (self._sex_idx  + 1) % len(self._SEX)
             elif self._focus == self._F_HAND:
                 self._hand_idx = (self._hand_idx + 1) % len(self._HAND)
+            elif self._focus == self._F_EDU:
+                self._edu_idx = (self._edu_idx + 1) % len(self._EDU)
 
         # Text input
         elif self._focus in (self._F_UID, self._F_AGE):
@@ -115,6 +121,9 @@ class UserDataForm:
                 elif key.startswith("hand_"):
                     self._focus    = self._F_HAND
                     self._hand_idx = int(key.split("_")[1])
+                elif key.startswith("edu_"):
+                    self._focus   = self._F_EDU
+                    self._edu_idx = int(key.split("_")[1])
                 # 🔴 MODIFICA: Se clicchi sul pulsante di conferma, avvia la validazione
                 elif key == "submit":
                     return self._validate()
@@ -130,9 +139,12 @@ class UserDataForm:
         if not age.isdigit() or not (1 <= int(age) <= 120):
             self._error = "Age must be a number between 1 and 120."; return None
         return ParticipantData(
-            user_id=uid, age=age,
+
+            user_id=uid,
+            age=age,
             sex=self._SEX[self._sex_idx],
             dominant_hand=self._HAND[self._hand_idx],
+            educational_level=self._EDU[self._edu_idx],
         )
 
     # ── drawing ────────────────────────────────────────────────────────────────
@@ -150,7 +162,7 @@ class UserDataForm:
         y       = WINDOW_H // 3
 
         # ── text fields (User ID, Age) ────────────────────────────────────────
-        labels = {"user_id": "User ID", "age": "Age"}
+        labels = {"user_id": "User ID", "age": "Age", "educational level":"Educational Level"}
         for i, key in enumerate(self._FIELDS):
             active = (self._focus == i)
             s.blit(font_s.render(labels[key], True, C_ACCENT if active else C_TEXT),
@@ -193,6 +205,11 @@ class UserDataForm:
         s.blit(font_s.render("Dominant Hand", True, C_ACCENT if active_hand else C_TEXT),
                (field_x, y)); y += 22
         draw_selector(self._HAND, self._hand_idx, self._F_HAND, "hand", y); y += 54
+
+        active_edu = (self._focus == self._F_EDU)
+        s.blit(font_s.render("Educational Level", True, C_ACCENT if active_edu else C_TEXT),
+               (field_x, y)); y += 22
+        draw_selector(self._EDU, self._edu_idx, self._F_EDU, "edu", y); y += 54
 
 # ── footer ────────────────────────────────────────────────────────────
         # Mettiamo il footer a una distanza fissa di 100px dall'ultimo selettore

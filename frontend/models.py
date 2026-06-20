@@ -9,6 +9,7 @@ class ParticipantData:
     age:           str = ""
     sex:           str = ""   # "M" | "F" | "Other"
     dominant_hand: str = ""   # "Right" | "Left"
+    educational_level: str = "" # "High School" | "Bachelor's" | "Master's" | "PhD" | "Other"
 
 
 @dataclass

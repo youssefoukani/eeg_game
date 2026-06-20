@@ -20,6 +20,7 @@ class GameEngine:
         self._participant = participant
         self._eeg         = eeg or EEGInterface()
         self._fonts       = make_fonts()
+        self.label_font = pygame.font.SysFont("Montserrat", 23, bold=True)
 
     def run(self) -> bool:
         input_mgr  = InputManager(self._eeg)
@@ -123,7 +124,6 @@ class GameEngine:
                 (center_x - 10, center_y + 15), # Inizio punta inf
                 (center_x + 30, center_y + 15), # Coda inferiore
             ]
-            center_text(self._screen, "LEFT", self._fonts[0], C_TEXT,   42)
         else: # RIGHT
             # Disegno di una freccia verso destra
             points = [
@@ -135,12 +135,20 @@ class GameEngine:
                 (center_x + 10, center_y + 15),
                 (center_x - 30, center_y + 15),
             ]
-            center_text(self._screen, "RIGHT", self._fonts[0], C_TEXT,   42)
             
             
         
         pygame.draw.polygon(self._screen, arrow_color, points)
-        # Un piccolo bordo scuro opzionale per staccare dallo sfondo
+
         pygame.draw.polygon(self._screen, C_BG, points, 2)
+
+        label = "LEFT" if direction == "LEFT" else "RIGHT"
+        
+
+        text_surface = self.label_font.render(label, True, C_TEXT)
+
+        text_rect = text_surface.get_rect(center=(center_x, center_y))
+
+        self._screen.blit(text_surface, text_rect)
 
         

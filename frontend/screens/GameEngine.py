@@ -32,6 +32,7 @@ class GameEngine:
         clock         = pygame.time.Clock()
         session_start = time.time()
         dash_offset   = 0.0
+        self.feedback_until = 0.0
         obs_speed     = (OBSTACLE_HIT_Y - OBSTACLE_SPAWN_Y) / OBSTACLE_TRAVEL_TIME
 
 
@@ -55,14 +56,37 @@ class GameEngine:
                 obstacles.update(game_time, dt)
 
             for obs in collisions.check(player, obstacles.obstacles, game_time):
+
                 metrics.log_collision(game_time, player.lane, obs)
 
+                self.feedback_text = "BAD!"
+
+                self.feedback_until = time.time() + 1.0
+
             for obs in obstacles.remove_passed():
+
+                print(
+                    f"PASSED: lane={obs.lane}, "
+                    f"player_lane={player.lane}, "
+                    f"hit={obs.hit}, "
+                    f"y={obs.y}"
+                )
+
+                # Se era già stato colpito non fare nulla
+                if obs.hit:
+                    continue
+
                 if obs.lane != player.lane:
                     metrics.log_avoidance(game_time, player.lane, obs)
-                elif not obs.hit:
+
+                    self.feedback_text = "GOOD!"
+                    self.feedback_until = time.time() + 1.0
+
+                else:
                     metrics.log_collision(game_time, player.lane, obs)
 
+                    self.feedback_text = "BAD!"
+                    self.feedback_until = time.time() + 1.0
             dash_offset += obs_speed * dt
             self._screen.fill(C_BG)
             draw_road(self._screen, dash_offset)
@@ -80,6 +104,8 @@ class GameEngine:
                         cue_direction = "RIGHT"
                     else:
                         cue_direction = "LEFT"
+           
+                
 
             # Render degli ostacoli e dell'auto
             for obs in obstacles.obstacles:
@@ -90,6 +116,9 @@ class GameEngine:
             # ─── 2. RENDERING DELLA FRECCIA DI CUE ───
             if cue_direction:
                 self.draw_cue_arrow(cue_direction)
+
+            if time.time() < self.feedback_until:
+                self.draw_feedback(self._screen, self._fonts, self.feedback_text, metrics.collisions, metrics.avoidances)
 
             # draw_hud(self._screen, self._fonts, remaining,
             #          player.lane, metrics.collisions, metrics.avoidances)
@@ -151,4 +180,19 @@ class GameEngine:
 
         self._screen.blit(text_surface, text_rect)
 
+
+    def draw_feedback(self, screen, fonts, feedback_label, collisions, avoidances ) :
+
+        pos_x = WINDOW_W // 2
+        pos_y = WINDOW_H // 2
+        text_surface = self.label_font.render(feedback_label, True, C_TEXT)
+
+        text_rect = text_surface.get_rect(center=(pos_x, pos_y))
+
+        self._screen.blit(text_surface, text_rect)
+
+   
+
+
+    
         

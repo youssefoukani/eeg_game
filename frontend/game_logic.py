@@ -48,7 +48,8 @@ class ObstacleManager:
             obs.y += obs.speed * dt
 
     def remove_passed(self) -> list[Obstacle]:
-        passed         = [o for o in self.obstacles if o.y > WINDOW_H + OBS_H]
+        
+        passed         = [o for o in self.obstacles if o.y - OBS_H / 2 > PLAYER_Y + CAR_H / 2]
         self.obstacles = [o for o in self.obstacles if o.y <= WINDOW_H + OBS_H]
         return passed
 

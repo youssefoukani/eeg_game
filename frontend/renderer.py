@@ -1,5 +1,7 @@
 import pygame
 from config import *
+import random
+import math
 
 def make_fonts() -> tuple:
     """Return (font_bold, font, font_small) tuple using standard system fonts."""
@@ -30,19 +32,67 @@ def divider(surf: pygame.Surface, y: int, margin: int = 60) -> None:
 
 def draw_car(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> None:
     r = pygame.Rect(cx - CAR_W // 2, cy - CAR_H // 2, CAR_W, CAR_H)
-    pygame.draw.rect(surf, colour, r, border_radius=5)
-    pygame.draw.rect(surf, (40, 40, 50),
-                     pygame.Rect(r.x + 4, r.y + 8, CAR_W - 8, CAR_H // 5), border_radius=3)
-    for lx in (r.x + 2, r.right - 10):
-        pygame.draw.rect(surf, (80, 80, 100), pygame.Rect(lx, r.bottom - 8, 8, 5), border_radius=2)
 
+    # Ombra leggermente offset sotto l'auto, per dare profondità
+    shadow = r.copy()
+    shadow.move_ip(3, 5)
+    pygame.draw.rect(surf, (0, 0, 0, 60), shadow, border_radius=6)
+
+    # Corpo principale
+    pygame.draw.rect(surf, colour, r, border_radius=6)
+    # Leggero "sfumato" superiore per dare volume (striscia più chiara in alto)
+    pygame.draw.rect(surf, tuple(min(c + 30, 255) for c in colour),
+                      pygame.Rect(r.x, r.y, CAR_W, CAR_H // 4), border_radius=6)
+
+    # Parabrezza (più scuro, leggermente trapezoidale)
+    windshield = [
+        (r.x + 6, r.y + CAR_H * 0.28),
+        (r.right - 6, r.y + CAR_H * 0.28),
+        (r.right - 10, r.y + CAR_H * 0.55),
+        (r.x + 10, r.y + CAR_H * 0.55),
+    ]
+    pygame.draw.polygon(surf, (35, 40, 55), windshield)
+
+    # Lunotto posteriore
+    rear_window = pygame.Rect(r.x + 8, r.bottom - CAR_H // 4, CAR_W - 16, CAR_H // 6)
+    pygame.draw.rect(surf, (40, 40, 50), rear_window, border_radius=2)
+
+    # Fari anteriori (gialli/bianchi)
+    for lx in (r.x + 3, r.right - 9):
+        pygame.draw.rect(surf, (255, 240, 180), pygame.Rect(lx, r.y + 2, 6, 5), border_radius=2)
+
+    # Stop posteriori (rossi)
+    for lx in (r.x + 3, r.right - 9):
+        pygame.draw.rect(surf, (200, 30, 30), pygame.Rect(lx, r.bottom - 7, 6, 5), border_radius=2)
+
+    # Ruote ai lati (sporgenti dal corpo, viste dall'alto)
+    wheel_w, wheel_h = 5, CAR_H // 4
+    for wy in (r.y + CAR_H * 0.18, r.bottom - CAR_H * 0.18 - wheel_h):
+        pygame.draw.rect(surf, (15, 15, 15), pygame.Rect(r.x - 2, wy, wheel_w, wheel_h), border_radius=2)
+        pygame.draw.rect(surf, (15, 15, 15), pygame.Rect(r.right - wheel_w + 2, wy, wheel_w, wheel_h), border_radius=2)
+        
 def draw_obstacle(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> None:
     r = pygame.Rect(cx - OBS_W // 2, cy - OBS_H // 2, OBS_W, OBS_H)
     pygame.draw.rect(surf, colour, r, border_radius=4)
-    m = 10
-    pygame.draw.line(surf, (255, 255, 255), (r.x + m, r.y + m), (r.right - m, r.bottom - m), 2)
-    pygame.draw.line(surf, (255, 255, 255), (r.right - m, r.y + m), (r.x + m, r.bottom - m), 2)
+    pygame.draw.rect(surf, (20, 20, 20), r, 2, border_radius=4)
 
+    # Strisce diagonali rosse/gialle alternate (stile barriera di pericolo)
+    stripe_w = 8
+    clip = surf.get_clip()
+    surf.set_clip(r)
+    x = r.x - r.height
+    i = 0
+    while x < r.right:
+        # Colori alternati: Rosso e Giallo
+        colore_strip = (255, 0, 0) if i % 2 == 0 else (255, 255, 0)
+        pygame.draw.polygon(surf, colore_strip, [
+            (x, r.bottom), (x + r.height, r.y),
+            (x + r.height + stripe_w, r.y), (x + stripe_w, r.bottom)
+        ])
+        x += stripe_w
+        i += 1
+    surf.set_clip(clip)
+    
 def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
     pygame.draw.rect(surf, C_ROAD, (ROAD_X, 0, ROAD_W, surf.get_height()))
     for x in (ROAD_X, ROAD_X + ROAD_W):

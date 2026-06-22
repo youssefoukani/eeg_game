@@ -20,7 +20,12 @@ class GameEngine:
         self._participant = participant
         self._eeg         = eeg or EEGInterface()
         self._fonts       = make_fonts()
-        self.label_font = pygame.font.SysFont("Montserrat", 23, bold=True)
+        self.label_font = pygame.font.SysFont("Montserrat", 72, bold=True)
+        self.arrow_label_font = pygame.font.SysFont("Montserrat", 28, bold=True)
+        self.is_paused = False
+        self.pause_start_time = 0
+        self.PAUSE_DURATION = 5  # secondi di pausa
+        self.snapshot = None
 
     def run(self) -> bool:
         input_mgr  = InputManager(self._eeg, use_keyboard=False)
@@ -37,11 +42,13 @@ class GameEngine:
 
 
         while True:
+
             dt        = clock.tick(FPS) / 1000.0
             game_time = time.time() - session_start
             remaining = max(0.0, MATCH_DURATION - game_time)
 
             events = pygame.event.get()
+
 
             for ev in events:
 
@@ -53,49 +60,105 @@ class GameEngine:
 
                     return False
 
-            input_mgr.poll(events)
-            cmd = input_mgr.get_player_command()
-            if cmd and player.apply_command(cmd):
-                metrics.log_lane_change(game_time, player.lane)
+            if self.is_paused:
+                # 1. Ripristina lo stato del gioco (cancella il timer precedente)
+                self._screen.blit(self.snapshot, (0, 0))
+                
+                # 2. Calcola e disegna il nuovo timer
+                tempo_rimanente = max(0, self.PAUSE_DURATION - (time.time() - self.pause_start_time))
+                lines = [
+                        "COLLISIONE!",
+                        f"RESTART IN: {tempo_rimanente:.1f}"
+                    ]
+                    
+                    # 4. Rendering multiriga centrato
+                line_spacing = 10
+                y = self._screen.get_height() // 2 - 40  # Offset iniziale per centrare il blocco
+                
+                for line in lines:
+                    text_surface = self.label_font.render(line, True, (128, 0, 32))
+                    text_rect = text_surface.get_rect(center=(self._screen.get_width() // 2, y))
+                    self._screen.blit(text_surface, text_rect)
+                    y += text_surface.get_height() + line_spacing
+                pygame.display.flip()
 
-            if remaining > 0:
-                obstacles.update(game_time, dt)
-
-            for obs in collisions.check(player, obstacles.obstacles, game_time):
-
-                metrics.log_collision(game_time, player.lane, obs)
-
-                self.feedback_text = "BAD!"
-
-                self.feedback_until = time.time() + 1.0
-
-            for obs in obstacles.remove_passed():
-
-                print(
-                    f"PASSED: lane={obs.lane}, "
-                    f"player_lane={player.lane}, "
-                    f"hit={obs.hit}, "
-                    f"y={obs.y}"
-                )
-
-                # Se era già stato colpito non fare nulla
-                if obs.hit:
+                if time.time() - self.pause_start_time >= self.PAUSE_DURATION:
+                    player.lane = LANE_LEFT if player.lane != LANE_LEFT else LANE_RIGHT
+                    player.x = float(LANE_CENTERS[player.lane])
+                    self.feedback_text = "READY!"
+                    self.feedback_until = time.time() + 1.0
+                    self.is_paused = False
+                else:
                     continue
 
-                if obs.lane != player.lane:
-                    metrics.log_avoidance(game_time, player.lane, obs)
+            if not self.is_paused:
+                # --- LOGICA NORMALE (Solo se non in pausa) ---
+                input_mgr.poll(events)
+                cmd = input_mgr.get_player_command()
+                if cmd and player.apply_command(cmd):
+                    metrics.log_lane_change(game_time, player.lane)
 
-                    self.feedback_text = "GOOD!"
-                    self.feedback_until = time.time() + 1.0
+                if remaining > 0:
+                    obstacles.update(game_time, dt)
 
-                else:
+                # Disegna SUBITO il frame con la posizione aggiornata di auto e
+                # ostacoli (corsia già cambiata da apply_command, se applicabile),
+                # PRIMA di controllare le collisioni. Così, se viene rilevata una
+                # collisione, lo snapshot che congeliamo rappresenta esattamente
+                # lo stato reale al momento dell'urto (niente più auto disegnata
+                # nella corsia vecchia mentre la collisione è già su quella nuova).
+                dash_offset += obs_speed * dt
+                self._screen.fill(C_BG)
+                draw_road(self._screen, dash_offset)
+                for obs in obstacles.obstacles:
+                    draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,
+                                C_OBSTACLE_HIT if obs.hit else C_OBSTACLE)
+                draw_car(self._screen, LANE_CENTERS[player.lane], PLAYER_Y, C_PLAYER)
+
+                hits = collisions.check(player, obstacles.obstacles, game_time)
+                if hits:
+                    obs = hits[0]
                     metrics.log_collision(game_time, player.lane, obs)
+                    self.is_paused = True
+                    self.pause_start_time = time.time()
 
-                    self.feedback_text = "BAD!"
+                    self.feedback_text = "COLLISION!"
                     self.feedback_until = time.time() + 1.0
-            dash_offset += obs_speed * dt
-            self._screen.fill(C_BG)
-            draw_road(self._screen, dash_offset)
+
+                    # Ora lo snapshot riflette correttamente l'auto/ostacolo
+                    # nella corsia in cui è avvenuta davvero la collisione.
+                    self.snapshot = self._screen.copy()
+
+                    # Questo continue si riferisce al while principale, quindi
+                    # salta davvero il resto del frame (freccia di cue, feedback,
+                    # flip aggiuntivo) ed entra in pausa al giro successivo.
+                    continue
+
+                for obs in obstacles.remove_passed():
+
+                    print(
+                        f"PASSED: lane={obs.lane}, "
+                        f"player_lane={player.lane}, "
+                        f"hit={obs.hit}, "
+                        f"y={obs.y}"
+                    )
+
+                    # Se era già stato colpito non fare nulla
+                    if obs.hit:
+                        continue
+
+                    if obs.lane != player.lane:
+                        metrics.log_avoidance(game_time, player.lane, obs)
+
+                        self.feedback_text = "GOOD!"
+                        self.feedback_until = time.time() + 1.0
+
+                    else:
+                        metrics.log_collision(game_time, player.lane, obs)
+
+                        self.feedback_text = "COLLISION!"
+                        self.feedback_until = time.time() + 1.0
+                        continue
 
             # ─── 1. DETERMINAZIONE DEL CUE VISIVO (FRECCIA) ───
             cue_direction = None
@@ -113,12 +176,11 @@ class GameEngine:
            
                 
 
-            # Render degli ostacoli e dell'auto
-            for obs in obstacles.obstacles:
-                draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,
-                              C_OBSTACLE_HIT if obs.hit else C_OBSTACLE)
-            draw_car(self._screen, LANE_CENTERS[player.lane], PLAYER_Y, C_PLAYER)
-            
+            # Render degli ostacoli e dell'auto già eseguito sopra (prima del
+            # controllo collisioni), per garantire coerenza fra corsia
+            # disegnata e corsia su cui è stata rilevata l'eventuale collisione.
+
+
             # ─── 2. RENDERING DELLA FRECCIA DI CUE ───
             if cue_direction:
                 self.draw_cue_arrow(cue_direction)
@@ -180,7 +242,7 @@ class GameEngine:
         label = "LEFT" if direction == "LEFT" else "RIGHT"
         
 
-        text_surface = self.label_font.render(label, True, C_TEXT)
+        text_surface = self.arrow_label_font.render(label, True, C_BORDEAUX)
 
         text_rect = text_surface.get_rect(center=(center_x, center_y))
 
@@ -193,12 +255,9 @@ class GameEngine:
         pos_y = WINDOW_H // 2
         text_surface = self.label_font.render(feedback_label, True, C_TEXT)
 
+        # Usa la nuova costante del colore
+        text_surface = self.label_font.render(feedback_label, True, C_BORDEAUX if feedback_label == "COLLISION!" else C_OK)
+
         text_rect = text_surface.get_rect(center=(pos_x, pos_y))
 
         self._screen.blit(text_surface, text_rect)
-
-   
-
-
-    
-        

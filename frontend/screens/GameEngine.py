@@ -8,7 +8,7 @@ from eeg_interface import EEGInterface
 from input_manager import InputManager
 from game_logic import PlayerController, ObstacleManager, CollisionSystem
 from metrics_logger import MetricsLogger
-from renderer import make_fonts, draw_car, draw_obstacle, draw_road
+from renderer import make_fonts, draw_car, draw_obstacle, draw_road, draw_scenery
 from screens import ResultsScreen
 from renderer import center_text
 
@@ -129,14 +129,9 @@ class GameEngine:
                 if remaining > 0:
                     obstacles.update(game_time, dt)
 
-                # Disegna SUBITO il frame con la posizione aggiornata di auto e
-                # ostacoli (corsia già cambiata da apply_command, se applicabile),
-                # PRIMA di controllare le collisioni. Così, se viene rilevata una
-                # collisione, lo snapshot che congeliamo rappresenta esattamente
-                # lo stato reale al momento dell'urto (niente più auto disegnata
-                # nella corsia vecchia mentre la collisione è già su quella nuova).
                 dash_offset += obs_speed * dt
                 self._screen.fill(C_BG)
+                draw_scenery(self._screen, dash_offset)
                 draw_road(self._screen, dash_offset)
                 for obs in obstacles.obstacles:
                     draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,

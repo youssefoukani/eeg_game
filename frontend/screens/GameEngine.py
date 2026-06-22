@@ -151,8 +151,6 @@ class GameEngine:
                         self.is_paused = True
                         self.pause_start_time = time.time()
                         self.snapshot = self._screen.copy()
-                        self.feedback_text = "COLLISION!"
-                        self.feedback_until = time.time() + 1.0
                         continue
 
                 for obs in obstacles.remove_passed():
@@ -179,7 +177,6 @@ class GameEngine:
 
                         self.feedback_text = "COLLISION!"
                         self.feedback_until = time.time() + 1.0
-                        continue
 
             # ─── 1. DETERMINAZIONE DEL CUE VISIVO (FRECCIA) ───
             cue_direction = None

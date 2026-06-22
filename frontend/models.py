@@ -19,6 +19,7 @@ class Obstacle:
     speed:      float
     spawned_at: float
     hit:        bool = False
+    passed: bool = False
 
 
 @dataclass

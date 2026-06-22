@@ -23,7 +23,7 @@ class GameEngine:
         self.label_font = pygame.font.SysFont("Montserrat", 23, bold=True)
 
     def run(self) -> bool:
-        input_mgr  = InputManager(self._eeg)
+        input_mgr  = InputManager(self._eeg, use_keyboard=False)
         player     = PlayerController()
         obstacles  = ObstacleManager()
         collisions = CollisionSystem()
@@ -41,13 +41,19 @@ class GameEngine:
             game_time = time.time() - session_start
             remaining = max(0.0, MATCH_DURATION - game_time)
 
-            for ev in pygame.event.get():
+            events = pygame.event.get()
+
+            for ev in events:
+
                 if ev.type == pygame.QUIT:
-                    return False
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+
                     return False
 
-            input_mgr.poll(pygame.event.get())
+                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+
+                    return False
+
+            input_mgr.poll(events)
             cmd = input_mgr.get_player_command()
             if cmd and player.apply_command(cmd):
                 metrics.log_lane_change(game_time, player.lane)

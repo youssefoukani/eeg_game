@@ -2,28 +2,43 @@
 import random
 from typing import Optional
 
-from config import (
-    LANE_LEFT, LANE_RIGHT, LANE_CENTERS,
-    OBSTACLE_SPAWN_Y, OBSTACLE_HIT_Y, OBSTACLE_TRAVEL_TIME,
-    SPAWN_MIN, SPAWN_MAX, WINDOW_H, OBS_H, CAR_H, PLAYER_Y,
-)
+from config import *
 from models import Obstacle
 
 
 class PlayerController:
-
     def __init__(self):
         self.lane = LANE_LEFT
-        self.x    = float(LANE_CENTERS[LANE_LEFT])
+        # La posizione attuale (quella che disegni)
+        self.x = float(LANE_CENTERS[LANE_LEFT])
+        # La posizione di destinazione
+        self.target_x = float(LANE_CENTERS[LANE_LEFT])
+        # Velocità di spostamento (regola questo valore per la fluidità)
+        self.smoothness = 0.2 
 
+    @property
+    def is_moving(self):
+        # Restituisce True se la differenza è significativa
+        return abs(self.x - self.target_x) > 2.0
+        
     def apply_command(self, cmd: Optional[str]) -> bool:
-        """Move to the requested lane. Returns True if the lane changed."""
-        target = {"LEFT": LANE_LEFT, "RIGHT": LANE_RIGHT}.get(cmd)
-        if target is not None and target != self.lane:
-            self.lane = target
-            self.x    = float(LANE_CENTERS[target])
+        """Imposta solo la destinazione, non la posizione immediata."""
+        target_lane = {"LEFT": LANE_LEFT, "RIGHT": LANE_RIGHT}.get(cmd)
+        
+        if target_lane is not None and target_lane != self.lane:
+            self.lane = target_lane
+            self.target_x = float(LANE_CENTERS[target_lane])
             return True
         return False
+
+    def update(self):
+        """Da chiamare in ogni frame del gioco."""
+        # Se siamo lontani dal target, ci avviciniamo gradualmente
+        if abs(self.x - self.target_x) > 0.1:
+            # Interpolazione lineare: ci spostiamo di una percentuale della distanza
+            self.x += (self.target_x - self.x) * self.smoothness
+        else:
+            self.x = self.target_x
 
 
 class ObstacleManager:
@@ -65,15 +80,29 @@ class ObstacleManager:
 class CollisionSystem:
 
     def check(self, player: PlayerController, obstacles: list[Obstacle], _: float) -> list[Obstacle]:
-        player_top    = PLAYER_Y - CAR_H
-        player_bottom = PLAYER_Y
+        # Definiamo i confini dell'auto in base alla sua posizione fluida x
+        p_left   = player.x - CAR_W // 2
+        p_right  = player.x + CAR_W // 2
+        p_top    = PLAYER_Y - CAR_H // 2
+        p_bottom = PLAYER_Y + CAR_H // 2
+        
         hits = []
         for obs in obstacles:
-            if obs.hit or obs.lane != player.lane:
+            if obs.hit:
                 continue
-            obs_top    = obs.y - OBS_H
-            obs_bottom = obs.y
-            if obs_bottom >= player_top and obs_top <= player_bottom:
+                
+            # Definiamo i confini dell'ostacolo (fissi nella sua corsia)
+            obs_cx = float(LANE_CENTERS[obs.lane])
+            o_left   = obs_cx - OBS_W // 2
+            o_right  = obs_cx + OBS_W // 2
+            o_top    = obs.y - OBS_H // 2
+            o_bottom = obs.y + OBS_H // 2
+            
+            # Controllo collisione rettangolare (AABB collision)
+            if (p_left < o_right and p_right > o_left and
+                p_top < o_bottom and p_bottom > o_top):
+                
                 obs.hit = True
                 hits.append(obs)
+                
         return hits

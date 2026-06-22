@@ -26,6 +26,7 @@ class GameEngine:
         self.pause_start_time = 0
         self.PAUSE_DURATION = 5  # secondi di pausa
         self.snapshot = None
+        self.input_lock_until = 0
 
     def run(self) -> bool:
         input_mgr  = InputManager(self._eeg, use_keyboard=False)
@@ -83,20 +84,47 @@ class GameEngine:
                 pygame.display.flip()
 
                 if time.time() - self.pause_start_time >= self.PAUSE_DURATION:
-                    player.lane = LANE_LEFT if player.lane != LANE_LEFT else LANE_RIGHT
-                    player.x = float(LANE_CENTERS[player.lane])
+                    # 1. Determina la nuova corsia in modo deterministico
+                    # Esempio: se è a sinistra, vai a destra, e viceversa.
+                    # Assicurati che LANE_LEFT e LANE_RIGHT siano costanti univoche (es. 0 e 1)
+                    target_lane = LANE_RIGHT if player.lane == LANE_LEFT else LANE_LEFT
+                    
+                    # 2. Aggiorna il controller del giocatore
+                    player.lane = target_lane
+                    new_x = float(LANE_CENTERS[target_lane])
+                    
+                    # 3. Aggiornamento FORZATO (senza interpolazione)
+                    player.x = new_x
+                    player.target_x = new_x
+                    
+                    # 4. Feedback e reset stato
                     self.feedback_text = "READY!"
                     self.feedback_until = time.time() + 1.0
                     self.is_paused = False
+                    self.input_lock_until = time.time() + 1.5
+                    
+                    # IMPORTANTE: Svuota la coda degli eventi per evitare che un tasto
+                    # premuto durante la pausa causi un cambio corsia immediato appena riparte
+                    pygame.event.clear()
                 else:
                     continue
 
             if not self.is_paused:
-                # --- LOGICA NORMALE (Solo se non in pausa) ---
-                input_mgr.poll(events)
-                cmd = input_mgr.get_player_command()
-                if cmd and player.apply_command(cmd):
-                    metrics.log_lane_change(game_time, player.lane)
+                # --- LOGICA NORMALE ---
+                
+                # Verifica se siamo nel periodo di lock
+                can_accept_input = time.time() > self.input_lock_until
+                
+                if can_accept_input:
+                    input_mgr.poll(events)
+                    cmd = input_mgr.get_player_command()
+                    if cmd and player.apply_command(cmd):
+                        metrics.log_lane_change(game_time, player.lane)
+                else:
+                    # Anche se bloccato, svuota la coda per evitare "accumulo"
+                    pygame.event.clear()
+
+                player.update()
 
                 if remaining > 0:
                     obstacles.update(game_time, dt)
@@ -113,26 +141,19 @@ class GameEngine:
                 for obs in obstacles.obstacles:
                     draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,
                                 C_OBSTACLE_HIT if obs.hit else C_OBSTACLE)
-                draw_car(self._screen, LANE_CENTERS[player.lane], PLAYER_Y, C_PLAYER)
+                draw_car(self._screen, player.x, PLAYER_Y, C_PLAYER)
 
-                hits = collisions.check(player, obstacles.obstacles, game_time)
-                if hits:
-                    obs = hits[0]
-                    metrics.log_collision(game_time, player.lane, obs)
-                    self.is_paused = True
-                    self.pause_start_time = time.time()
-
-                    self.feedback_text = "COLLISION!"
-                    self.feedback_until = time.time() + 1.0
-
-                    # Ora lo snapshot riflette correttamente l'auto/ostacolo
-                    # nella corsia in cui è avvenuta davvero la collisione.
-                    self.snapshot = self._screen.copy()
-
-                    # Questo continue si riferisce al while principale, quindi
-                    # salta davvero il resto del frame (freccia di cue, feedback,
-                    # flip aggiuntivo) ed entra in pausa al giro successivo.
-                    continue
+                if not player.is_moving:
+                    hits = collisions.check(player, obstacles.obstacles, game_time)
+                    if hits:
+                        obs = hits[0]
+                        metrics.log_collision(game_time, player.lane, obs)
+                        self.is_paused = True
+                        self.pause_start_time = time.time()
+                        self.snapshot = self._screen.copy()
+                        self.feedback_text = "COLLISION!"
+                        self.feedback_until = time.time() + 1.0
+                        continue
 
                 for obs in obstacles.remove_passed():
 

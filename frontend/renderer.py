@@ -112,36 +112,27 @@ def draw_car(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> None:
 
 
 def draw_obstacle(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> None:
-    """Ostacolo stile 'lavori in corso': cavalletto a strisce gialle/nere con piedi a terra.
+    """Ostacolo stile 'lavori in corso': blocco unico con strisce gialle/nere.
 
-    Il parametro `colour` non è più usato direttamente per il corpo (per restare fedele
-    al tema cantiere), ma viene mantenuto in firma per compatibilità con le chiamate esistenti.
+    Tutta la grafica resta contenuta nel rettangolo di collisione `r`,
+    quindi non ci sono parti (gambe, piedi, ecc.) che sporgono visivamente
+    fuori dall'area che genera la collisione.
+
+    Il parametro `colour` non è usato direttamente per il corpo (per restare
+    fedele al tema cantiere), ma viene mantenuto in firma per compatibilità
+    con le chiamate esistenti.
     """
     r = pygame.Rect(cx - OBS_W // 2, cy - OBS_H // 2, OBS_W, OBS_H)
 
-    # Ombra leggera sotto il cavalletto
-    shadow_surf = pygame.Surface((r.width + 10, 14), pygame.SRCALPHA)
+    # Ombra leggera sotto il blocco (puramente estetica, non sporge sui lati)
+    shadow_surf = pygame.Surface((r.width + 6, 10), pygame.SRCALPHA)
     pygame.draw.ellipse(shadow_surf, (0, 0, 0, 60), shadow_surf.get_rect())
-    surf.blit(shadow_surf, (r.x - 5, r.bottom - 6))
+    surf.blit(shadow_surf, (r.x - 3, r.bottom - 4))
 
-    # Gambe del cavalletto (a V, toccano il bordo inferiore del rettangolo di collisione)
-    leg_colour = (40, 40, 38)
-    pygame.draw.line(surf, leg_colour, (r.centerx - r.width * 0.32, r.bottom),
-                      (r.centerx, r.y + r.height * 0.55), 4)
-    pygame.draw.line(surf, leg_colour, (r.centerx + r.width * 0.32, r.bottom),
-                      (r.centerx, r.y + r.height * 0.55), 4)
+    # Corpo del blocco: base scura + pannello a strisce, tutto dentro r
+    pygame.draw.rect(surf, (35, 35, 33), r, border_radius=6)
 
-    # Pannello superiore con strisce diagonali gialle/nere
-    panel_h = int(r.height * 0.45)
-    panel = pygame.Rect(r.x, r.y + int(r.height * 0.05), r.width, panel_h)
-
-    # Alone chiaro dietro il pannello: garantisce contrasto con lo sfondo qualunque esso sia
-    # (asfalto scuro, erba, ostacolo successivo, ecc.) invece di affidarsi al solo contrasto
-    # "casuale" col colore sottostante.
-    halo_pad = 5
-    halo = pygame.Surface((panel.width + halo_pad * 2, panel.height + halo_pad * 2), pygame.SRCALPHA)
-    pygame.draw.rect(halo, (255, 255, 255, 150), halo.get_rect(), border_radius=8)
-    surf.blit(halo, (panel.x - halo_pad, panel.y - halo_pad))
+    panel = r.inflate(-6, -6)
 
     pygame.draw.rect(surf, (242, 194, 53), panel, border_radius=4)
     stripe_w = 8
@@ -158,11 +149,15 @@ def draw_obstacle(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> 
         x += stripe_w
         i += 1
     surf.set_clip(clip)
+
     pygame.draw.rect(surf, (20, 20, 20), panel, 3, border_radius=4)
 
-    # Piccolo riflesso in alto sul pannello per dare un filo di profondità
+    # Riflesso in alto per un filo di profondità
     pygame.draw.line(surf, (245, 245, 245), (panel.x + 4, panel.y + 2),
                       (panel.right - 4, panel.y + 2), 1)
+
+    # Bordo esterno netto: coincide esattamente col rettangolo di collisione
+    pygame.draw.rect(surf, (15, 15, 15), r, 2, border_radius=6)
 
 
 def _pseudo_random(seed: int) -> float:

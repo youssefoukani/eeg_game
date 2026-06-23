@@ -14,20 +14,32 @@ class PlayerController:
         # La posizione di destinazione
         self.target_x = float(LANE_CENTERS[LANE_LEFT])
         # Velocità di spostamento (regola questo valore per la fluidità)
-        self.smoothness = 0.2 
+     
+        self.normal_smoothness = 0.2
+        self.collisione_smoothness = 0.05  # Velocità di ripiazzamento in caso di collisione
+
 
     @property
     def is_moving(self):
         # Restituisce True se la differenza è significativa
         return abs(self.x - self.target_x) > 2.0
+    
+    def move_to_lane(self, lane: int):
+        self.lane = lane
+        self.target_x = float(LANE_CENTERS[lane])
+        self.smoothness = self.normal_smoothness  # Mantieni la fluidità normale
+
+    def move_to_lane_after_collision(self, lane: int):
+        self.lane = lane
+        self.target_x = float(LANE_CENTERS[lane])
+        self.smoothness = self.collisione_smoothness  # Riduci la fluidità per un riposizionamento più rapido
         
     def apply_command(self, cmd: Optional[str]) -> bool:
         """Imposta solo la destinazione, non la posizione immediata."""
         target_lane = {"LEFT": LANE_LEFT, "RIGHT": LANE_RIGHT}.get(cmd)
         
         if target_lane is not None and target_lane != self.lane:
-            self.lane = target_lane
-            self.target_x = float(LANE_CENTERS[target_lane])
+            self.move_to_lane(target_lane)
             return True
         return False
 
@@ -39,6 +51,7 @@ class PlayerController:
             self.x += (self.target_x - self.x) * self.smoothness
         else:
             self.x = self.target_x
+            self.smoothness = self.normal_smoothness  # Ripristina la fluidità normale dopo aver raggiunto il target
 
 
 class ObstacleManager:

@@ -29,7 +29,7 @@ class GameEngine:
         self.input_lock_until = 0
 
     def run(self) -> bool:
-        input_mgr  = InputManager(self._eeg, use_keyboard=False)
+        input_mgr  = InputManager(self._eeg, use_keyboard=True)
         player     = PlayerController()
         obstacles  = ObstacleManager()
         collisions = CollisionSystem()
@@ -90,12 +90,11 @@ class GameEngine:
                     target_lane = LANE_RIGHT if player.lane == LANE_LEFT else LANE_LEFT
                     
                     # 2. Aggiorna il controller del giocatore
-                    player.lane = target_lane
-                    new_x = float(LANE_CENTERS[target_lane])
+                    player.target_x = float(LANE_CENTERS[target_lane])
                     
                     # 3. Aggiornamento FORZATO (senza interpolazione)
-                    player.x = new_x
-                    player.target_x = new_x
+                    
+
                     
                     # 4. Feedback e reset stato
                     self.feedback_text = "READY!"

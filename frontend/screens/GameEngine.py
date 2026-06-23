@@ -90,7 +90,7 @@ class GameEngine:
                     target_lane = LANE_RIGHT if player.lane == LANE_LEFT else LANE_LEFT
                     
                     # 2. Aggiorna il controller del giocatore
-                    player.target_x = float(LANE_CENTERS[target_lane])
+                    player.move_to_lane_after_collision(target_lane)
                     
                     # 3. Aggiornamento FORZATO (senza interpolazione)
                     

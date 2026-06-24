@@ -21,7 +21,7 @@ class GameEngine:
         self._eeg         = eeg or EEGInterface()
         self._fonts       = make_fonts()
         self.label_font = pygame.font.SysFont("Montserrat", 72, bold=True)
-        self.arrow_label_font = pygame.font.SysFont("Montserrat", 28, bold=True)
+        self.arrow_label_font = pygame.font.SysFont("Montserrat", 24, bold=False)
         self.is_paused = False
         self.pause_start_time = 0
         self.PAUSE_DURATION = 5  # secondi di pausa

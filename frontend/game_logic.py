@@ -55,12 +55,12 @@ class PlayerController:
 
 
 class ObstacleManager:
-
     _SPEED = (OBSTACLE_HIT_Y - OBSTACLE_SPAWN_Y) / OBSTACLE_TRAVEL_TIME
 
     def __init__(self, seed: int = 42):
         self.obstacles: list[Obstacle] = []
-        self._rng        = random.Random(seed)
+        self.pending_obstacles: list[Obstacle] = [] # Nuova lista per il cue time
+        self._rng = random.Random(seed)
         self._next_spawn = 0.0
 
     def update(self, game_time: float, dt: float) -> None:
@@ -72,21 +72,24 @@ class ObstacleManager:
                 spawned_at=game_time,
             ))
             self._next_spawn = game_time + self._rng.uniform(SPAWN_MIN, SPAWN_MAX)
+
         for obs in self.obstacles:
-            obs.y += obs.speed * dt
+            # Gestione visibilità: diventa visibile solo dopo il cue time
+            if not obs.visible and game_time >= obs.spawned_at + CUE_LEAD_TIME:
+                obs.visible = True
+            
+            # Movimento: si muove solo se è visibile
+            if obs.visible:
+                obs.y += obs.speed * dt
 
     def remove_passed(self) -> list[Obstacle]:
-        
         passed = []
-
         for o in self.obstacles:
-
             if (not o.passed and o.y - OBS_H / 2 > PLAYER_Y + CAR_H / 2):
                 o.passed = True
                 passed.append(o)
 
         self.obstacles = [o for o in self.obstacles if o.y <= WINDOW_H + OBS_H]
-
         return passed
 
 

@@ -20,6 +20,7 @@ class Obstacle:
     spawned_at: float
     hit:        bool = False
     passed: bool = False
+    visible = False
 
 
 @dataclass

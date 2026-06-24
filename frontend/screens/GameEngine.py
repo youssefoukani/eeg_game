@@ -27,6 +27,7 @@ class GameEngine:
         self.PAUSE_DURATION = 5  # secondi di pausa
         self.snapshot = None
         self.input_lock_until = 0
+        self.feedback_text = ""
 
     def run(self) -> bool:
         input_mgr  = InputManager(self._eeg, use_keyboard=True)
@@ -133,19 +134,27 @@ class GameEngine:
                 draw_scenery(self._screen, dash_offset)
                 draw_road(self._screen, dash_offset)
                 for obs in obstacles.obstacles:
-                    draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,
-                                C_OBSTACLE_HIT if obs.hit else C_OBSTACLE)
+                    if obs.visible:
+                        draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,
+                                    C_OBSTACLE_HIT if obs.hit else C_OBSTACLE)
                 draw_car(self._screen, player.x, PLAYER_Y, C_PLAYER)
 
-                if not player.is_moving:
-                    hits = collisions.check(player, obstacles.obstacles, game_time)
-                    if hits:
-                        obs = hits[0]
-                        metrics.log_collision(game_time, player.lane, obs)
-                        self.is_paused = True
-                        self.pause_start_time = time.time()
-                        self.snapshot = self._screen.copy()
-                        continue
+                # FIX: il check va eseguito ad ogni frame (non solo a player
+                # fermo), altrimenti un ostacolo evitato durante un cambio
+                # corsia in corso può generare una collisione "fantasma" se
+                # il player torna in quella corsia da fermo prima che
+                # l'ostacolo venga rimosso. Con il check continuo, una volta
+                # superata la finestra di sovrapposizione verticale senza
+                # mai aver toccato l'auto, l'ostacolo resta hit=False per
+                # sempre (CollisionSystem.check ignora gli obs già hit=True).
+                hits = collisions.check(player, obstacles.obstacles, game_time)
+                if hits:
+                    obs = hits[0]
+                    metrics.log_collision(game_time, player.lane, obs)
+                    self.is_paused = True
+                    self.pause_start_time = time.time()
+                    self.snapshot = self._screen.copy()
+                    continue
 
                 for obs in obstacles.remove_passed():
 
@@ -156,49 +165,62 @@ class GameEngine:
                         f"y={obs.y}"
                     )
 
-                    # Se era già stato colpito non fare nulla
+                    # Se era già stato colpito non fare nulla (la collisione
+                    # è già stata gestita dal check continuo sopra)
                     if obs.hit:
                         continue
 
-                    if obs.lane != player.lane:
-                        metrics.log_avoidance(game_time, player.lane, obs)
+                    # FIX: l'esito (evitato o no) va dedotto da obs.hit, che
+                    # è impostato in modo affidabile dal check continuo
+                    # durante tutta la finestra di sovrapposizione verticale
+                    # con la x reale del player. Confrontare obs.lane con
+                    # player.lane SOLO nell'istante di rimozione è scorretto:
+                    # se il player torna nella corsia dell'ostacolo dopo
+                    # averlo già schivato (ma prima che venga rimosso), le
+                    # corsie risultano uguali anche se non c'è mai stata
+                    # sovrapposizione reale, e il "GOOD!" non scattava più.
+                    # Se siamo arrivati qui, obs.hit è False: è stato evitato.
+                    metrics.log_avoidance(game_time, player.lane, obs)
 
-                        self.feedback_text = "GOOD!"
-                        self.feedback_until = time.time() + 1.0
+                    self.feedback_text = "GOOD!"
+                    self.feedback_until = time.time() + 1.0
 
-                    else:
-                        metrics.log_collision(game_time, player.lane, obs)
-
-                        self.feedback_text = "COLLISION!"
-                        self.feedback_until = time.time() + 1.0
 
             # ─── 1. DETERMINAZIONE DEL CUE VISIVO (FRECCIA) ───
-            cue_direction = None
-            if remaining > 0 and obstacles.obstacles:
-                # Filtra gli ostacoli non ancora superati e prendi il più vicino (y maggiore)
-                valid_obstacles = [o for o in obstacles.obstacles if o.y - OBS_H/2 < PLAYER_Y + CAR_H/2]
-                if valid_obstacles:
-                    next_obstacle = max(valid_obstacles, key=lambda o: o.y)
-                    
-                    # Se l'ostacolo è a sinistra (0), la freccia deve indicare destra (1) e viceversa
-                    if next_obstacle.lane == 0:
-                        cue_direction = "RIGHT"
-                    else:
-                        cue_direction = "LEFT"
-           
+            cue_data = None # Salviamo sia la direzione che lo stato dell'ostacolo
+            
+            # Filtra ostacoli non ancora superati
+            valid_obstacles = [o for o in obstacles.obstacles if not o.passed]
+            
+            if valid_obstacles:
+                # Prendi quello più vicino al giocatore (y maggiore)
+                next_obstacle = max(valid_obstacles, key=lambda o: o.y)
                 
-
-            # Render degli ostacoli e dell'auto già eseguito sopra (prima del
-            # controllo collisioni), per garantire coerenza fra corsia
-            # disegnata e corsia su cui è stata rilevata l'eventuale collisione.
-
+                # Definiamo la direzione (se lane 0 -> RIGHT, se lane 1 -> LEFT)
+                direction = "RIGHT" if next_obstacle.lane == 0 else "LEFT"
+                cue_data = {"dir": direction, "visible": next_obstacle.visible}
 
             # ─── 2. RENDERING DELLA FRECCIA DI CUE ───
-            if cue_direction:
-                self.draw_cue_arrow(cue_direction)
+            if cue_data:
+                # Logica del lampeggio:
+                # Lampeggia solo se è visibile, altrimenti resta fissa
+                should_draw = True
+                if cue_data["visible"]:
+                    # Effetto lampeggio (es: 10 volte al secondo)
+                    if int(time.time() * 10) % 2 != 0:
+                        should_draw = False
+                
+                if should_draw:
+                    self.draw_cue_arrow(cue_data["dir"])
 
             if time.time() < self.feedback_until:
-                self.draw_feedback(self._screen, self._fonts, self.feedback_text, metrics.collisions, metrics.avoidances)
+                self.draw_feedback(
+                    self._screen, 
+                    self._fonts, 
+                    self.feedback_text, 
+                    metrics.collisions, 
+                    metrics.avoidances
+                )
 
             # draw_hud(self._screen, self._fonts, remaining,
             #          player.lane, metrics.collisions, metrics.avoidances)

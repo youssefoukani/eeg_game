@@ -8,7 +8,7 @@ WINDOW_H   = _info.current_h
 FPS        = 60
 
 # Session
-MATCH_DURATION   = 15   # seconds
+MATCH_DURATION   = 180   # seconds
 CROSS_DURATION   = 2.0   # seconds
 
 # Lanes
@@ -19,6 +19,7 @@ LANE_RIGHT = 1
 OBSTACLE_TRAVEL_TIME = 5   # seconds spawn → collision
 SPAWN_MIN            = 18   # seconds between obstacles
 SPAWN_MAX            = 22
+CUE_LEAD_TIME = 5
 
 # Road layout
 ROAD_W       = WINDOW_W // 3

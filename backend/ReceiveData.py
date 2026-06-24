@@ -21,7 +21,7 @@ def setup_outlets():
 def main():
     # 1. Configurazione
     WINDOW_SIZE = 250
-    SNAP_SAMPLE_FREQ = 250  # Ogni quanti campioni viene creato un nuovo snapshot
+    SNAP_SAMPLE_FREQ = 750  # Ogni quanti campioni viene creato un nuovo snapshot
     
     # 2. Inizializzazione stream LSL
     print("Ricerca di un flusso EEG sulla rete locale...")

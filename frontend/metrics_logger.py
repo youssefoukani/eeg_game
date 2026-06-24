@@ -62,7 +62,7 @@ class MetricsLogger:
             "avoidances",
             "lane_changes",
         ]
-        for i in range(1, 11):
+        for i in range(1, 10):
             header.extend([
                 f"obs{i}_collision_time",
                 f"obs{i}_avoidance_time"

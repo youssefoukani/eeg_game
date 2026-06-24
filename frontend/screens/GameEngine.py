@@ -207,7 +207,7 @@ class GameEngine:
                 should_draw = True
                 if cue_data["visible"]:
                     # Effetto lampeggio (es: 10 volte al secondo)
-                    if int(time.time() * 10) % 2 != 0:
+                    if int(time.time() * 5) % 2 != 0:
                         should_draw = False
                 
                 if should_draw:

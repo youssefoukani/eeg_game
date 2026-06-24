@@ -231,11 +231,6 @@ def _draw_bush(surf: pygame.Surface, x: float, y: float, scale: float = 1.0, see
         pygame.draw.ellipse(surf, colour, pygame.Rect(x + dx - w / 2, y + dy - h / 2, w, h))
 
 
-def _draw_cloud(surf: pygame.Surface, x: float, y: float, scale: float = 1.0) -> None:
-    colour = (250, 250, 248)
-    pygame.draw.ellipse(surf, colour, pygame.Rect(x, y, 50 * scale, 22 * scale))
-    pygame.draw.ellipse(surf, colour, pygame.Rect(x + 20 * scale, y - 9 * scale, 36 * scale, 20 * scale))
-    pygame.draw.ellipse(surf, colour, pygame.Rect(x - 10 * scale, y + 4 * scale, 30 * scale, 16 * scale))
 
 
 def draw_scenery(surf: pygame.Surface, scroll_offset: float) -> None:
@@ -287,9 +282,6 @@ def draw_scenery(surf: pygame.Surface, scroll_offset: float) -> None:
             _draw_tree(surf, right_x - 10, y + 10, scale=1.05, seed=row_id * 2 + 1)
         y += cycle
 
-    # Nuvole statiche in alto (non scorrono, danno solo respiro alla scena)
-    _draw_cloud(surf, 40, 18, scale=1.0)
-    _draw_cloud(surf, surf.get_width() - 100, 30, scale=0.85)
 
 
 def draw_road(surf: pygame.Surface, dash_offset: float) -> None:

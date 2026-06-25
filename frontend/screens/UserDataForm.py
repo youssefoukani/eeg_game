@@ -159,7 +159,7 @@ class UserDataForm:
 
         field_w = WINDOW_W // 2
         field_x = WINDOW_W // 2 - field_w // 2
-        y       = WINDOW_H // 3
+        y       = WINDOW_H // 5
 
         # ── text fields (User ID, Age) ────────────────────────────────────────
         labels = {"user_id": "User ID", "age": "Age", "educational level":"Educational Level"}

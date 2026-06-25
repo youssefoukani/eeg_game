@@ -2,7 +2,7 @@ import pygame
 
 from config import *
 from eeg_interface import EEGInterface
-from renderer import make_fonts, center_text
+from renderer import make_fonts, center_text, divider
 from .utils import _handle_quit
 
 class SignalQualityCheck:
@@ -21,7 +21,7 @@ class SignalQualityCheck:
         while True:
             rect=pygame.Rect(WINDOW_W*1//4, 150, WINDOW_W//2, WINDOW_H//3-85)
 
-            self._draw(rect, show_button=True)  # Usa il metodo di disegno del quality screen senza mostrare il pulsante
+            self._draw(rect)  # Usa il metodo di disegno del quality screen senza mostrare il pulsante
 
             pygame.display.flip()
             self._clock.tick(FPS)
@@ -38,12 +38,11 @@ class SignalQualityCheck:
                     if ev.button == 1 and self._btn_rect.collidepoint(ev.pos):
                         return
 
-    def _draw(self, rect: pygame.Rect = None, show_button: bool = True):
+    def _draw(self, rect: pygame.Rect = None):
         font_b, font, font_s = self._fonts
-        if show_button:
-            self._screen.fill(C_BG)
-        else:
-            pygame.draw.rect(self._screen, C_BG, rect)
+        
+        self._screen.fill(C_BG)
+
 
         qualities = self._eeg.get_channel_quality()
         channels = EEGInterface.CHANNELS
@@ -55,6 +54,7 @@ class SignalQualityCheck:
             rect.width,
             rect.height,
         )
+        divider(self._screen, 100)
         pygame.draw.rect(self._screen, (28, 30, 38), panel, border_radius=18)
         pygame.draw.rect(self._screen, (55, 58, 70), panel, width=2, border_radius=18)
 
@@ -128,15 +128,13 @@ class SignalQualityCheck:
             (bar_x + bar_w + 8, avg_y)
 
         )
-        if show_button:
-            center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
-            from renderer import draw_button
-            self._btn_rect = draw_button(
-                self._screen,
-                "CONTINUE",
-                font_b,
-                (WINDOW_W // 2, WINDOW_H * 2 // 3),
-                padding=30,
-            )
-        else:
-            self._btn_rect = pygame.Rect(0, 0, 0, 0)
+        
+        center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
+        from renderer import draw_button
+        self._btn_rect = draw_button(
+            self._screen,
+            "CONTINUE",
+            font_b,
+            (WINDOW_W // 2, WINDOW_H * 2 // 3),
+            padding=30,
+        )

@@ -1,7 +1,7 @@
 import pygame
 
 from config import *
-from renderer import make_fonts
+from renderer import make_fonts, divider
 
 from .utils import _handle_quit
 
@@ -63,12 +63,9 @@ class HeadsetGuide:
         # Subtle card behind the title area
         card = pygame.Rect(0, 0, WINDOW_W, HEADER_H)
         pygame.draw.rect(s, C_HUD_BG, card)
-        pygame.draw.line(s, C_ACCENT, (0, HEADER_H), (WINDOW_W, HEADER_H), 2)
+        divider(s, 100)
 
-        # Step badge — "STEP 1 of 5" style indicator
-        badge_font = pygame.font.SysFont("monospace", 11, bold=True)
-        badge_surf = badge_font.render("PRE-SESSION  ·  STEP 0", True, C_ACCENT)
-        s.blit(badge_surf, (PADDING + 4, 14))
+        
 
         # Main title — larger and prominent
         title_font = pygame.font.SysFont("monospace", 22, bold=True)
@@ -86,7 +83,7 @@ class HeadsetGuide:
 
         # ── image area ─────────────────────────────────────────────────────────
         IMG_GAP     = 16          # gap between panels
-        IMG_PAD     = 24          # horizontal margin from window edge
+        IMG_PAD     = 20          # horizontal margin from window edge
         available_w = WINDOW_W - IMG_PAD * 2
         available_h = WINDOW_H - HEADER_H - FOOTER_H - 16
 

@@ -19,7 +19,12 @@ class SignalQualityCheck:
         self._eeg.connect()
 
         while True:
-            rect=pygame.Rect(WINDOW_W*1//4, 150, WINDOW_W//2, WINDOW_H//3-85)
+
+            rect_left = WINDOW_W*1//4
+            rect_width = WINDOW_W//2
+            rect_height= 520
+            rect_top = 200
+            rect=pygame.Rect(rect_left, rect_top, rect_width, rect_height)
 
             self._draw(rect)  # Usa il metodo di disegno del quality screen senza mostrare il pulsante
 
@@ -40,101 +45,129 @@ class SignalQualityCheck:
 
     def _draw(self, rect: pygame.Rect = None):
         font_b, font, font_s = self._fonts
-        
+
+        # ── Sfondo principale ────────────────────────────────────────────────
         self._screen.fill(C_BG)
 
+        # ── Header ───────────────────────────────────────────────────────────
+        center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
+        divider(self._screen, 100)
 
+        # ── Dati EEG ─────────────────────────────────────────────────────────
         qualities = self._eeg.get_channel_quality()
         channels = EEGInterface.CHANNELS
         avg_quality = sum(qualities) / len(qualities) if qualities else 0
 
-        panel = pygame.Rect(
-            rect.x,
-            rect.y + 10,
-            rect.width,
-            rect.height,
-        )
-        divider(self._screen, 100)
-        pygame.draw.rect(self._screen, (28, 30, 38), panel, border_radius=18)
-        pygame.draw.rect(self._screen, (55, 58, 70), panel, width=2, border_radius=18)
+        # ── Palette di stato (Colori Flat Moderni) ───────────────────────────
+        def status_color(q):
+            if q >= 80:
+                return (94, 211, 153)    # verde  — buono
+            elif q >= 50:
+                return (235, 186, 99)    # giallo — accettabile
+            else:
+                return (227, 122, 122)   # rosso — scarso
+
+        # ── Calcolo Altezza Dinamica della Card ──────────────────────────────
+        start_y = rect.y + 32
+        row_h = 38
+        channels_total_h = len(channels) * row_h
+        
+        # L'altezza calcola lo spazio per i canali + il box AVG (68px) + i relativi padding
+        dynamic_card_h = 32 + channels_total_h + 22 + 68 + 32
+        panel = pygame.Rect(rect.x, rect.y + 10, rect.width, dynamic_card_h)
+        # Disegno Card Principale (Flat)
+        pygame.draw.rect(self._screen, C_INPUT_BG, panel, border_radius=14)
+        pygame.draw.rect(self._screen, C_INPUT_BORDER, panel, width=1, border_radius=14)
 
         panel_w = panel.width - 60
         panel_x = panel.x + 30
-        start_y = panel.y + 25
-        row_h = 28
 
+        # ── Ciclo Canali EEG ─────────────────────────────────────────────────
         for i, (channel, quality) in enumerate(zip(channels, qualities)):
             y = start_y + i * row_h
-            if quality >= 80:
-                color = (46, 204, 113)
-            elif quality >= 50:
-                color = (241, 196, 15)
-            else:
-                color = (231, 76, 60)
+            color = status_color(quality)
 
-            txt = font.render(channel, True, C_TEXT)
-            self._screen.blit(txt, (panel_x, y - 2))
+            # Badge canale (Flat)
+            badge_rect = pygame.Rect(panel_x, y, 56, 24)
+            pygame.draw.rect(self._screen, (32, 35, 44), badge_rect, border_radius=6)
+            pygame.draw.rect(self._screen, (52, 56, 68), badge_rect, width=1, border_radius=6)
 
-            label_w = 60
-            percent_w = 60
-            bar_h = 18
-            bar_x = panel_x + label_w
-            bar_w = panel_w - label_w - percent_w
+            txt = font_s.render(channel, True, C_TEXT)
+            txt_x = badge_rect.x + (badge_rect.width - txt.get_width()) // 2
+            txt_y = badge_rect.y + (badge_rect.height - txt.get_height()) // 2
+            self._screen.blit(txt, (txt_x, txt_y))
 
-            bg_rect = pygame.Rect(bar_x, y, bar_w, bar_h)
-            pygame.draw.rect(self._screen, (45, 45, 55), bg_rect, border_radius=bar_h // 2)
+            # Piccolo indicatore di stato a cerchio
+            dot_x = badge_rect.right + 12
+            dot_y = badge_rect.centery
+            pygame.draw.circle(self._screen, color, (dot_x, dot_y), 4)
 
-            fill_rect = pygame.Rect(bar_x, y, int(bar_w * quality / 100), bar_h)
-            pygame.draw.rect(self._screen, color, fill_rect, border_radius=bar_h // 2)
+            # Progress bar (Flat flat!)
+            bar_x = dot_x + 14
+            percent_w = 56
+            bar_h = 10
+            bar_w = panel_w - (bar_x - panel_x) - percent_w
+            bar_y = y + (badge_rect.height - bar_h) // 2
 
-            perc = font_s.render(f"{quality}%", True, C_TEXT)
-            self._screen.blit(perc, (bar_x + bar_w + 10, y - 2))
+            bg_rect = pygame.Rect(bar_x, bar_y, bar_w, bar_h)
+            pygame.draw.rect(self._screen, (35, 38, 47), bg_rect, border_radius=5)
 
-        # ── Indicatore Media ──────────────────────────────────────────────
-        avg_y = start_y + len(channels) * row_h + 60
+            if quality > 0:
+                fill_w = max(bar_h, int(bar_w * (quality / 100)))
+                fill_rect = pygame.Rect(bar_x, bar_y, fill_w, bar_h)
+                pygame.draw.rect(self._screen, color, fill_rect, border_radius=5)
+
+            # Percentuale numerica
+            perc = font.render(f"{quality}%", True, color)
+            perc_y = y + (badge_rect.height - perc.get_height()) // 2
+            self._screen.blit(perc, (bar_x + bar_w + 14, perc_y))
+
+        # ── Sotto-card AVG (Flat) ────────────────────────────────────────────
+        avg_y = start_y + channels_total_h + 22
+        avg_panel = pygame.Rect(panel_x, avg_y, panel_w, 68)
+        avg_color = status_color(avg_quality)
+
+        # Rimosso il calcolo del "tinted_bg", ora usa uno sfondo scuro flat pulito
+        pygame.draw.rect(self._screen, C_INPUT_ACTIVE, avg_panel, border_radius=10)
+        pygame.draw.rect(self._screen, avg_color, avg_panel, width=1, border_radius=10)
 
         
 
-        # Colore media
-        if avg_quality >= 80:
-            avg_color = (46, 204, 113)
-        elif avg_quality >= 50:
-            avg_color = (241, 196, 15)
-        else:
-            avg_color = (231, 76, 60)
+        # Testi AVG
+        avg_txt = font.render("TOTAL", True, C_TEXT)
+        label_x = avg_panel.x + 34
+        label_y = avg_y + 24
+        self._screen.blit(avg_txt, (label_x, label_y ))
 
-        avg_y += 8
+        # Barra della media totale (Flat)
+        avg_bar_x = label_x + 90
+        avg_percent_w = 78
+        avg_bar_w = avg_panel.width - (avg_bar_x - avg_panel.x) - avg_percent_w - 18
+        avg_bar_h = 16
+        avg_bar_y = avg_panel.y + (avg_panel.height - avg_bar_h) // 2
 
-        self._screen.blit(font_b.render("AVG", True, avg_color), (panel_x, avg_y))
+        pygame.draw.rect(self._screen, (40, 43, 53), (avg_bar_x, avg_bar_y, avg_bar_w, avg_bar_h), border_radius=6)
+        if avg_quality > 0:
+            avg_fill_w = max(avg_bar_h, int(avg_bar_w * (avg_quality / 100)))
+            pygame.draw.rect(self._screen, avg_color, (avg_bar_x, avg_bar_y, avg_fill_w, avg_bar_h), border_radius=6)
 
-        bar_x = panel_x + 60
+        # Testo percentuale totale
+        avg_perc = font_b.render(f"{avg_quality:.0f}%", True, avg_color)
+        avg_perc_y = avg_panel.y + (avg_panel.height - avg_perc.get_height()) // 2
+        self._screen.blit(avg_perc, (avg_bar_x + avg_bar_w + 16, avg_perc_y))
 
-        bar_w = panel_w - 130
 
-        pygame.draw.rect(self._screen, (60, 62, 75),
+        btn_coord= (WINDOW_W // 2, FOOTER_Y+75)
 
-                        (bar_x, avg_y, bar_w, 22), border_radius=11)
+        divider(self._screen, FOOTER_Y )
 
-        pygame.draw.rect(self._screen, avg_color,
-
-                        (bar_x, avg_y, int(bar_w * avg_quality / 100), 22),
-
-                        border_radius=11)
-
-        self._screen.blit(
-
-            font_b.render(f"{avg_quality:.0f}%", True, avg_color),
-
-            (bar_x + bar_w + 8, avg_y)
-
-        )
         
-        center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
+        # ── Pulsante di continuazione ────────────────────────────────────────
         from renderer import draw_button
         self._btn_rect = draw_button(
             self._screen,
-            "CONTINUE",
+            "ENTER — CONTINUE",
             font_b,
-            (WINDOW_W // 2, WINDOW_H * 2 // 3),
-            padding=30,
+            btn_coord,
+            padding=28,
         )

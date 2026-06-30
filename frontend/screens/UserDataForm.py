@@ -335,9 +335,9 @@ class UserDataForm:
         # ------------------------------------------------------------------
         # FOOTER
         # ------------------------------------------------------------------
-        footer_y = card.bottom + 110
+        
 
-        divider(s, footer_y)
+        divider(s, FOOTER_Y)
 
         if self._error:
             center_text(
@@ -345,7 +345,7 @@ class UserDataForm:
                 self._error,
                 font_s,
                 C_WARNING,
-                footer_y + 15,
+                FOOTER_Y + 15,
             )
 
         from renderer import draw_button
@@ -354,7 +354,7 @@ class UserDataForm:
             s,
             "ENTER — CONFIRM",
             font_b,
-            (WINDOW_W // 2, footer_y + 75),
+            (WINDOW_W // 2, FOOTER_Y + 75),
             padding=28,
         )
 

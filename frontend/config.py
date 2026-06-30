@@ -156,3 +156,5 @@ GAP_FIELD   = 26    # space between one field group and the next
 BORDER_W    = 1
 FOCUS_RING_W = 2
  
+
+FOOTER_Y = 800

@@ -52,7 +52,7 @@ class HeadsetGuide:
     def _draw(self) -> None:
         font_b, font, font_s = self._fonts
         s = self._screen
-        s.fill(C_HUD_BG)
+        s.fill(C_BG)
 
         # ── 1. HEADER (Divider Superiore) ─────────────────────────────────────
         divider_top = 100
@@ -60,9 +60,9 @@ class HeadsetGuide:
         center_text(s, "HEADSET FITTING GUIDE", font_b, C_TEXT, 38)
 
         # ── 2. FOOTER (Divider Inferiore e Bottone) ────────────────────────────
-        center_pos = (WINDOW_W // 2, int(WINDOW_H * 7/8))
-        divider_bottom = center_pos[1] - 50
-        divider(s, divider_bottom)
+        center_pos = (WINDOW_W // 2, FOOTER_Y+75)
+        divider_bottom = center_pos[1] - 70
+        divider(s, FOOTER_Y)
 
         # Disegna il bottone e salva il rect locale
         from renderer import draw_button

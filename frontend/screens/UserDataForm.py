@@ -152,86 +152,210 @@ class UserDataForm:
     def _draw(self) -> None:
         font_b, font, font_s = self._fonts
         s = self._screen
+
         s.fill(C_BG)
-        center_text(s, "PARTICIPANT REGISTRATION", font_b, C_TEXT,   42)
-        center_text(s, "Motor Imagery BCI Protocol", font_s, C_MUTED, 72)
-        divider(s, 100)
 
-        field_w = WINDOW_W // 2
-        field_x = WINDOW_W // 2 - field_w // 2
-        y       = WINDOW_H // 5
+        # ------------------------------------------------------------------
+        # HEADER
+        # ------------------------------------------------------------------
+        center_text(s, "PARTICIPANT REGISTRATION", font_b, C_TEXT, 38)
+        
+        divider(s, 98)
 
-        # ── text fields (User ID, Age) ────────────────────────────────────────
-        labels = {"user_id": "User ID", "age": "Age", "educational level":"Educational Level"}
+        # ------------------------------------------------------------------
+        # CARD CENTRALE
+        # ------------------------------------------------------------------
+        card_w = 590
+        card_x = WINDOW_W // 2 - card_w // 2
+        card_y = 200
+        card_h = 520
+
+        card = pygame.Rect(card_x, card_y, card_w, card_h)
+
+        pygame.draw.rect(s, C_INPUT_BG, card, border_radius=10)
+        pygame.draw.rect(s, C_INPUT_BORDER, card, 1, border_radius=10)
+
+        field_w = card_w - 60
+        field_x = card_x + 30
+        y = card_y + 35
+
+        labels = {
+            "user_id": "User ID",
+            "age": "Age",
+            "educational level": "Educational Level"
+        }
+
+        # ------------------------------------------------------------------
+        # TEXT FIELDS
+        # ------------------------------------------------------------------
         for i, key in enumerate(self._FIELDS):
-            active = (self._focus == i)
-            s.blit(font_s.render(labels[key], True, C_ACCENT if active else C_TEXT),
-                   (field_x, y)); y += 22
 
-            box = pygame.Rect(field_x, y, field_w, 34)
-            pygame.draw.rect(s, C_INPUT_ACTIVE if active else C_INPUT_BG, box, border_radius=4)
-            pygame.draw.rect(s, C_ACCENT if active else C_INPUT_BORDER, box, 1, border_radius=4)
+            active = self._focus == i
+
+            lbl = font_s.render(
+                labels[key],
+                True,
+                C_ACCENT if active else C_TEXT
+            )
+
+            s.blit(lbl, (field_x, y))
+            y += 24
+
+            box = pygame.Rect(field_x, y, field_w, 40)
+
+            pygame.draw.rect(
+                s,
+                C_INPUT_ACTIVE if active else C_INPUT_BG,
+                box,
+                border_radius=6
+            )
+
+            pygame.draw.rect(
+                s,
+                C_ACCENT if active else C_INPUT_BORDER,
+                box,
+                2 if active else 1,
+                border_radius=6
+            )
 
             cursor = "|" if active and int(time.time() * 2) % 2 == 0 else ""
-            s.blit(font.render(self._texts[key] + cursor, True, C_TEXT), (box.x + 10, box.y + 8))
+
+            txt = font.render(
+                self._texts[key] + cursor,
+                True,
+                C_TEXT
+            )
+
+            s.blit(txt, (box.x + 12, box.y + 9))
 
             self._rects[key] = box
-            y += 40
 
-        # ── selector helper ───────────────────────────────────────────────────
+            y += 68
+
+        # ------------------------------------------------------------------
+        # SELECTOR
+        # ------------------------------------------------------------------
         def draw_selector(options, sel_idx, focus_idx, prefix, y_pos):
-            active = (self._focus == focus_idx)
-            btn_w  = field_w // len(options) - 6
+
+            active = self._focus == focus_idx
+
+            spacing = 8
+            btn_w = (field_w - spacing * (len(options) - 1)) // len(options)
+
             for i, opt in enumerate(options):
-                bx  = field_x + i * (btn_w + 9)
-                sel = (i == sel_idx)
-                bg  = C_INPUT_SEL if sel else (C_INPUT_ACTIVE if active else C_INPUT_BG)
-                bdr = C_ACCENT    if active else C_INPUT_BORDER
-                br  = pygame.Rect(bx, y_pos, btn_w, 34)
-                pygame.draw.rect(s, bg, br, border_radius=4)
-                pygame.draw.rect(s, bdr, br, 1, border_radius=4)
-                ts  = font_s.render(opt, True, C_TEXT if sel else C_MUTED)
-                s.blit(ts, (br.centerx - ts.get_width() // 2, br.y + 9))
-                self._rects[f"{prefix}_{i}"] = br
 
-        # ── Sex ───────────────────────────────────────────────────────────────
-        active_sex = (self._focus == self._F_SEX)
-        s.blit(font_s.render("Sex", True, C_ACCENT if active_sex else C_TEXT),
-               (field_x, y)); y += 22
-        draw_selector(self._SEX, self._sex_idx, self._F_SEX, "sex", y); y += 50
+                bx = field_x + i * (btn_w + spacing)
 
-        # ── Dominant Hand ─────────────────────────────────────────────────────
-        active_hand = (self._focus == self._F_HAND)
-        s.blit(font_s.render("Dominant Hand", True, C_ACCENT if active_hand else C_TEXT),
-               (field_x, y)); y += 22
-        draw_selector(self._HAND, self._hand_idx, self._F_HAND, "hand", y); y += 54
+                rect = pygame.Rect(bx, y_pos, btn_w, 36)
 
-        active_edu = (self._focus == self._F_EDU)
-        s.blit(font_s.render("Educational Level", True, C_ACCENT if active_edu else C_TEXT),
-               (field_x, y)); y += 22
-        draw_selector(self._EDU, self._edu_idx, self._F_EDU, "edu", y); y += 54
+                selected = i == sel_idx
 
-# ── footer ────────────────────────────────────────────────────────────
-        # Mettiamo il footer a una distanza fissa di 100px dall'ultimo selettore
-        # invece di ancorarlo al fondo dello schermo
-        y += 20 
-        divider(s, y); y += 20
+                bg = (
+                    C_INPUT_SEL
+                    if selected
+                    else (C_INPUT_ACTIVE if active else C_INPUT_BG)
+                )
+
+                pygame.draw.rect(s, bg, rect, border_radius=6)
+
+                pygame.draw.rect(
+                    s,
+                    C_ACCENT if active else C_INPUT_BORDER,
+                    rect,
+                    2 if selected else 1,
+                    border_radius=6
+                )
+
+                ts = font_s.render(
+                    opt,
+                    True,
+                    C_TEXT if selected else C_MUTED
+                )
+
+                s.blit(
+                    ts,
+                    (
+                        rect.centerx - ts.get_width() // 2,
+                        rect.centery - ts.get_height() // 2,
+                    ),
+                )
+
+                self._rects[f"{prefix}_{i}"] = rect
+
+        # ------------------------------------------------------------------
+        # SEX
+        # ------------------------------------------------------------------
+        active = self._focus == self._F_SEX
+        s.blit(
+            font_s.render(
+                "Sex",
+                True,
+                C_ACCENT if active else C_TEXT
+            ),
+            (field_x, y)
+        )
+
+        y += 24
+        draw_selector(self._SEX, self._sex_idx, self._F_SEX, "sex", y)
+        y += 66
+
+        # ------------------------------------------------------------------
+        # HAND
+        # ------------------------------------------------------------------
+        active = self._focus == self._F_HAND
+        s.blit(
+            font_s.render(
+                "Dominant Hand",
+                True,
+                C_ACCENT if active else C_TEXT
+            ),
+            (field_x, y)
+        )
+
+        y += 20
+        draw_selector(self._HAND, self._hand_idx, self._F_HAND, "hand", y)
+        y += 66
+
+        # ------------------------------------------------------------------
+        # EDUCATION
+        # ------------------------------------------------------------------
+        active = self._focus == self._F_EDU
+        s.blit(
+            font_s.render(
+                "Educational Level",
+                True,
+                C_ACCENT if active else C_TEXT
+            ),
+            (field_x, y)
+        )
+
+        y += 20
+        draw_selector(self._EDU, self._edu_idx, self._F_EDU, "edu", y)
+
+        # ------------------------------------------------------------------
+        # FOOTER
+        # ------------------------------------------------------------------
+        footer_y = card.bottom + 110
+
+        divider(s, footer_y)
 
         if self._error:
-            center_text(s, self._error, font_s, C_WARNING, y); y += 30
+            center_text(
+                s,
+                self._error,
+                font_s,
+                C_WARNING,
+                footer_y + 15,
+            )
 
-        # ── Pulsante Adattivo ─────────────────────────────────────────────────
-        from renderer import draw_button 
-        
+        from renderer import draw_button
+
         confirm_btn_rect = draw_button(
-            s, 
-            "ENTER — CONFIRM", 
-            font_b, 
-            (WINDOW_W // 2, y + 25), 
-            padding=30
+            s,
+            "ENTER — CONFIRM",
+            font_b,
+            (WINDOW_W // 2, footer_y + 75),
+            padding=28,
         )
+
         self._rects["submit"] = confirm_btn_rect
-        
-        # Shortcut reminder più vicino al bottone
-        center_text(s, "↑ ↓ navigate  |  ← → cycle  |  click to select",
-                    font_s, C_MUTED, y + 65)

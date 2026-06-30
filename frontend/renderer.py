@@ -8,7 +8,7 @@ def make_fonts() -> tuple:
     """Return (font_bold, font, font_small) tuple using standard system fonts."""
     # Arial è molto più leggibile su monitor rispetto al monospace
     return (
-        pygame.font.SysFont("arial", 22, bold=True),
+        pygame.font.SysFont("arial", 25, bold=True),
         pygame.font.SysFont("arial", 18),
         pygame.font.SysFont("arial", 16),
     )
@@ -311,29 +311,22 @@ def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
 
 
 def draw_button(surf: pygame.Surface, text: str, font, pos_center: tuple, padding: int = 20, hovered: bool = False) -> pygame.Rect:
-    # Renderizza il testo per misurarlo
+    # 1. Renderizza il testo per calcolarne le dimensioni
     text_surf = font.render(text, True, (255, 255, 255))
     tw, th = text_surf.get_size()
 
-    # Crea il rettangolo dinamico
+    # 2. Crea il rettangolo dinamico centrato
     btn_rect = pygame.Rect(0, 0, tw + padding * 2, th + padding)
     btn_rect.center = pos_center
 
-    # Colore leggermente più chiaro in stato hover
+    # 3. Gestione colore flat (cambia solo la luminosità in hover)
     colour = _clamp_colour(c + 25 for c in C_ACCENT) if hovered else C_ACCENT
 
-    # Ombra morbida sotto al pulsante (surface dedicata per l'alpha)
-    shadow_surf = pygame.Surface((btn_rect.width + 8, btn_rect.height + 8), pygame.SRCALPHA)
-    pygame.draw.rect(shadow_surf, (0, 0, 0, 60), pygame.Rect(4, 4, btn_rect.width, btn_rect.height), border_radius=8)
-    surf.blit(shadow_surf, (btn_rect.x - 4, btn_rect.y - 4 + 3))
-
-    # Sfondo del pulsante
+    # 4. Disegna lo sfondo del pulsante (pulito, senza ombre o linee 3D)
     pygame.draw.rect(surf, colour, btn_rect, border_radius=8)
-    # Bordo superiore più chiaro per dare un effetto "premibile"
-    pygame.draw.line(surf, _clamp_colour(c + 40 for c in colour),
-                      (btn_rect.x + 8, btn_rect.y + 2), (btn_rect.right - 8, btn_rect.y + 2), 2)
 
-    # Centra il testo dentro il rettangolo
-    surf.blit(text_surf, (btn_rect.centerx - tw // 2, btn_rect.centery - th // 2))
+    # 5. Centra e disegna il testo
+    text_pos = (btn_rect.centerx - tw // 2, btn_rect.centery - th // 2)
+    surf.blit(text_surf, text_pos)
 
     return btn_rect

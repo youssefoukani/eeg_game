@@ -1,7 +1,7 @@
 import pygame
 
 from config import *
-from renderer import make_fonts, divider
+from renderer import make_fonts, divider, center_text, round_image
 
 from .utils import _handle_quit
 
@@ -22,7 +22,7 @@ class HeadsetGuide:
         self._clock    = pygame.time.Clock()
         self._btn_rect = pygame.Rect(0, 0, 0, 0)
         self._panels   = self._load_panels()
-
+        self._rects = {}
     def _load_panels(self) -> list:
         import os
         panels = []
@@ -52,97 +52,53 @@ class HeadsetGuide:
     def _draw(self) -> None:
         font_b, font, font_s = self._fonts
         s = self._screen
+        s.fill(C_HUD_BG)
 
-        s.fill(C_BG)
+        # ── 1. HEADER (Divider Superiore) ─────────────────────────────────────
+        divider_top = 100
+        divider(s, divider_top)
+        center_text(s, "HEADSET FITTING GUIDE", font_b, C_TEXT, 38)
 
-        # ── header card ────────────────────────────────────────────────────────
-        HEADER_H = 110
-        FOOTER_H = 80
-        PADDING  = 16
-
-        # Subtle card behind the title area
-        card = pygame.Rect(0, 0, WINDOW_W, HEADER_H)
-        pygame.draw.rect(s, C_HUD_BG, card)
-        divider(s, 100)
-
-        
-
-        # Main title — larger and prominent
-        title_font = pygame.font.SysFont("monospace", 22, bold=True)
-        title_surf = title_font.render("HEADSET FITTING GUIDE", True, C_TEXT)
-        s.blit(title_surf, (PADDING + 4, 34))
-
-        # Subtitle
-        sub = font_s.render(
-            "Put on the Unicorn Hybrid Black before continuing.", True, C_MUTED)
-        s.blit(sub, (PADDING + 4, 68))
-
-        # Right-side hint (keyboard shortcut)
-        hint = font_s.render("ENTER  or  click to continue", True, C_MUTED)
-        s.blit(hint, (WINDOW_W - hint.get_width() - PADDING, 14))
-
-        # ── image area ─────────────────────────────────────────────────────────
-        IMG_GAP     = 16          # gap between panels
-        IMG_PAD     = 20          # horizontal margin from window edge
-        available_w = WINDOW_W - IMG_PAD * 2
-        available_h = WINDOW_H - HEADER_H - FOOTER_H - 16
-
-        if self._panels:
-            n       = len(self._panels)
-            panel_w = (available_w - IMG_GAP * (n - 1)) // n
-
-            scaled = []
-            for surf in self._panels:
-                ow, oh = surf.get_size()
-                scale  = min(panel_w / ow, available_h / oh)
-                nw, nh = int(ow * scale), int(oh * scale)
-                scaled.append(pygame.transform.smoothscale(surf, (nw, nh)))
-
-            # Centre the group horizontally
-            total_w = sum(p.get_width() for p in scaled) + IMG_GAP * (n - 1)
-            x       = (WINDOW_W - total_w) // 2
-            img_top = HEADER_H + 12
-
-            for surf in scaled:
-                # Shadow / border card behind each image
-                img_y   = img_top + (available_h - surf.get_height()) // 2
-                border  = pygame.Rect(x - 4, img_y - 4,
-                                      surf.get_width() + 8, surf.get_height() + 8)
-                pygame.draw.rect(s, C_DIVIDER, border, border_radius=6)
-                s.blit(surf, (x, img_y))
-                x += surf.get_width() + IMG_GAP
-
-        else:
-            # ── fallback placeholder ───────────────────────────────────────────
-            box = pygame.Rect(IMG_PAD, HEADER_H + 16,
-                              available_w, available_h)
-            pygame.draw.rect(s, C_INPUT_BG, box, border_radius=8)
-            pygame.draw.rect(s, C_INPUT_BORDER, box, 1, border_radius=8)
-
-            # Icon-like cross
-            cx, cy = box.centerx, box.centery - 30
-            for dx, dy, w, h in ((-24, -4, 48, 8), (-4, -24, 8, 48)):
-                pygame.draw.rect(s, C_DIVIDER,
-                                 pygame.Rect(cx + dx, cy + dy, w, h),
-                                 border_radius=3)
-
-            missing = font_b.render("Images not found", True, C_MUTED)
-            detail  = font_s.render(
-                "Place  guide_top.png  and  guide_bottom.png  next to  screens.py",
-                True, C_WARNING)
-            s.blit(missing, (box.centerx - missing.get_width() // 2, cy + 30))
-            s.blit(detail,  (box.centerx - detail.get_width()  // 2, cy + 58))
-
-    # ── footer button ──────────────────────────────────────────    
-        # 1. Definizione font e testo
-        btn_font = pygame.font.SysFont("arial", 18, bold=True) # Usa font leggibile
-        btn_text = "ENTER — CONTINUE"
-        
-        # 2. Chiama la funzione adattiva che abbiamo creato in renderer.py
-        from renderer import draw_button 
-        
-        # Posizione desiderata (centro orizzontale, 7/8 dell'altezza)
+        # ── 2. FOOTER (Divider Inferiore e Bottone) ────────────────────────────
         center_pos = (WINDOW_W // 2, int(WINDOW_H * 7/8))
+        divider_bottom = center_pos[1] - 50
+        divider(s, divider_bottom)
+
+        # Disegna il bottone e salva il rect locale
+        from renderer import draw_button
+        self._btn_rect = draw_button(s, "ENTER — CONTINUE", font_b, center_pos, padding=28)
+
+        # ── 3. AREA IMMAGINI (Centrata e con angoli smussati) ──────────────────
+        IMG_GAP = 16
+        PAD_X   = 20
         
-        # 3. Disegna il bottone e ottieni il rettangolo di collisione
-        self._btn_rect = draw_button(s, btn_text, btn_font, center_pos, padding=30)
+        space_y_top = divider_top + 10
+        space_y_bottom = divider_bottom - 10
+        available_h = space_y_bottom - space_y_top
+        available_w = WINDOW_W - (PAD_X * 2)
+
+        n = len(self._panels)
+        panel_w = (available_w - IMG_GAP * (n - 1)) // n
+        scaled_panels = []
+
+        for surf in self._panels:
+            ow, oh = surf.get_size()
+            scale  = min(panel_w / ow, available_h / oh)
+            nw, nh = int(ow * 0.90*scale), int(oh * 0.90*scale)
+            
+            # 1. Ridimensiona l'immagine
+            img_scaled = pygame.transform.smoothscale(surf, (nw, nh))
+            # 2. Applica gli angoli smussati (es. raggio 12px)
+            img_rounded = round_image(img_scaled, radius=12)
+            
+            scaled_panels.append(img_rounded)
+
+        # Calcolo X iniziale per centrare il gruppo orizzontalmente
+        total_w = sum(p.get_width() for p in scaled_panels) + IMG_GAP * (n - 1)
+        x = (WINDOW_W - total_w) // 2
+
+        # Disegno dei pannelli
+        for surf in scaled_panels:
+            img_y = space_y_top + (available_h - surf.get_height()) // 2
+            s.blit(surf, (x, img_y))
+            x += surf.get_width() + IMG_GAP

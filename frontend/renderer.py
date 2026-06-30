@@ -330,3 +330,18 @@ def draw_button(surf: pygame.Surface, text: str, font, pos_center: tuple, paddin
     surf.blit(text_surf, text_pos)
 
     return btn_rect
+
+def round_image(surface: pygame.Surface, radius: int) -> pygame.Surface:
+    """Ritorna una copia della superficie con gli angoli smussati."""
+    rect = surface.get_rect()
+    # Crea una superficie di shape identica, inizialmente trasparente
+    mask = pygame.Surface(rect.size, pygame.SRCALPHA)
+    mask.fill((0, 0, 0, 0))
+    
+    # Disegna un rettangolo bianco pieno con gli angoli smussati sulla maschera
+    pygame.draw.rect(mask, (255, 255, 255, 255), rect, border_radius=radius)
+    
+    # Copia l'immagine originale e usa il metodo BLEND_RGBA_MIN per ritagliarla
+    image = surface.copy()
+    image.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+    return image

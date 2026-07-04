@@ -352,7 +352,7 @@ class UserDataForm:
 
         confirm_btn_rect = draw_button(
             s,
-            "ENTER — CONFIRM",
+            "CONFIRM",
             font_b,
             (WINDOW_W // 2, FOOTER_Y + 75),
             padding=28,

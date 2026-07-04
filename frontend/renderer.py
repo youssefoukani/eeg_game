@@ -112,53 +112,127 @@ def draw_car(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> None:
 
 
 def draw_obstacle(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> None:
-    """Ostacolo stile 'lavori in corso': blocco unico con strisce gialle/nere.
 
-    Tutta la grafica resta contenuta nel rettangolo di collisione `r`,
-    quindi non ci sono parti (gambe, piedi, ecc.) che sporgono visivamente
-    fuori dall'area che genera la collisione.
+    r = pygame.Rect(
 
-    Il parametro `colour` non è usato direttamente per il corpo (per restare
-    fedele al tema cantiere), ma viene mantenuto in firma per compatibilità
-    con le chiamate esistenti.
-    """
-    r = pygame.Rect(cx - OBS_W // 2, cy - OBS_H // 2, OBS_W, OBS_H)
+        cx - OBS_W // 2,
 
-    # Ombra leggera sotto il blocco (puramente estetica, non sporge sui lati)
-    shadow_surf = pygame.Surface((r.width + 6, 10), pygame.SRCALPHA)
-    pygame.draw.ellipse(shadow_surf, (0, 0, 0, 60), shadow_surf.get_rect())
-    surf.blit(shadow_surf, (r.x - 3, r.bottom - 4))
+        cy - OBS_H // 2,
 
-    # Corpo del blocco: base scura + pannello a strisce, tutto dentro r
-    pygame.draw.rect(surf, (35, 35, 33), r, border_radius=6)
+        OBS_W,
 
-    panel = r.inflate(-6, -6)
+        OBS_H,
 
-    pygame.draw.rect(surf, (242, 194, 53), panel, border_radius=4)
-    stripe_w = 8
-    clip = surf.get_clip()
-    surf.set_clip(panel)
-    x = panel.x - panel.height
-    i = 0
-    while x < panel.right:
-        if i % 2 == 1:
-            pygame.draw.polygon(surf, (31, 31, 30), [
-                (x, panel.bottom), (x + panel.height, panel.y),
-                (x + panel.height + stripe_w, panel.y), (x + stripe_w, panel.bottom)
-            ])
-        x += stripe_w
-        i += 1
-    surf.set_clip(clip)
+    )
 
-    pygame.draw.rect(surf, (20, 20, 20), panel, 3, border_radius=4)
+    # Ombra
 
-    # Riflesso in alto per un filo di profondità
-    pygame.draw.line(surf, (245, 245, 245), (panel.x + 4, panel.y + 2),
-                      (panel.right - 4, panel.y + 2), 1)
+    shadow = pygame.Surface((r.width + 8, 10), pygame.SRCALPHA)
 
-    # Bordo esterno netto: coincide esattamente col rettangolo di collisione
-    pygame.draw.rect(surf, (15, 15, 15), r, 2, border_radius=6)
+    pygame.draw.ellipse(shadow, (0, 0, 0, 70), shadow.get_rect())
 
+    surf.blit(shadow, (r.x - 4, r.bottom - 3))
+
+    plank_gap = 7
+
+    plank_h = (r.height - 2 * plank_gap) // 3
+
+    stripe_w = 14
+
+    for i in range(3):
+
+        plank = pygame.Rect(
+
+            r.x,
+
+            r.y + i * (plank_h + plank_gap),
+
+            r.width,
+
+            plank_h,
+
+        )
+
+        # Tavola bianca
+
+        pygame.draw.rect(
+
+            surf,
+
+            (245, 245, 245),
+
+            plank,
+
+            border_radius=4,
+
+        )
+
+        # Strisce diagonali rosse
+
+        clip = surf.get_clip()
+
+        surf.set_clip(plank)
+
+        x = plank.x - plank.height
+
+        while x < plank.right:
+
+            pygame.draw.polygon(
+
+                surf,
+
+                (220, 55, 55),
+
+                [
+
+                    (x, plank.bottom),
+
+                    (x + plank.height, plank.top),
+
+                    (x + plank.height + stripe_w, plank.top),
+
+                    (x + stripe_w, plank.bottom),
+
+                ],
+
+            )
+
+            x += stripe_w * 2
+
+        surf.set_clip(clip)
+
+        # Bordo della tavola
+
+        pygame.draw.rect(
+
+            surf,
+
+            (35, 35, 35),
+
+            plank,
+
+            2,
+
+            border_radius=4,
+
+        )
+
+    # Cornice esterna
+
+    pygame.draw.rect(
+
+        surf,
+
+        (20, 20, 20),
+
+        r,
+
+        2,
+
+        border_radius=5,
+
+
+    )
 
 def _pseudo_random(seed: int) -> float:
     """Numero deterministico in [0, 1) a partire da un intero. Usato per variare leggermente

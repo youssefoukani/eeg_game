@@ -394,7 +394,7 @@ def draw_button(
     secondary: bool = False,
 ) -> pygame.Rect:
     # 1. Renderizza il testo per calcolarne le dimensioni
-    text_colour = C_TEXT if secondary else (255, 255, 255)
+    text_colour = C_WARNING if secondary else (255, 255, 255)
     text_surf = font.render(text, True, text_colour)
     tw, th = text_surf.get_size()
 
@@ -406,7 +406,7 @@ def draw_button(
         # Stile "outline": sfondo neutro, solo bordo, meno prominente
         bg_colour = _clamp_colour(c + 15 for c in C_INPUT_BG) if hovered else C_INPUT_BG
         pygame.draw.rect(surf, bg_colour, btn_rect, border_radius=8)
-        pygame.draw.rect(surf, C_INPUT_BORDER, btn_rect, 1, border_radius=8)
+        pygame.draw.rect(surf, C_WARNING, btn_rect, 1, border_radius=8)
     else:
         # 3. Gestione colore flat (cambia solo la luminosità in hover)
         colour = _clamp_colour(c + 25 for c in C_ACCENT) if hovered else C_ACCENT

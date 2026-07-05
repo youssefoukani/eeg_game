@@ -180,15 +180,16 @@ class UserDataForm:
         # ------------------------------------------------------------------
         center_text(s, "PARTICIPANT REGISTRATION", font_b, C_TEXT, 38)
         
-        divider(s, 98)
+        divider(s, HEADER_Y )
 
         # ------------------------------------------------------------------
         # CARD CENTRALE
         # ------------------------------------------------------------------
         card_w = 590
         card_x = WINDOW_W // 2 - card_w // 2
-        card_y = 200
-        card_h = 520
+        card_h = int((FOOTER_Y - HEADER_Y) * 0.7)
+
+        card_y = HEADER_Y + (FOOTER_Y - HEADER_Y - card_h) // 2
 
         card = pygame.Rect(card_x, card_y, card_w, card_h)
 

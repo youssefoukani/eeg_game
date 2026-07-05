@@ -53,7 +53,7 @@ class SignalQualityCheck:
 
         # ── Header ───────────────────────────────────────────────────────────
         center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
-        divider(self._screen, 100)
+        divider(self._screen, HEADER_Y)
 
         # ── Dati EEG ─────────────────────────────────────────────────────────
         qualities = self._eeg.get_channel_quality()
@@ -70,13 +70,32 @@ class SignalQualityCheck:
                 return (227, 122, 122)   # rosso — scarso
 
         # ── Calcolo Altezza Dinamica della Card ──────────────────────────────
-        start_y = rect.y + 32
-        row_h = 38
+        base_h = rect.height
+
+        padding_top = int(base_h * 0.06)
+
+        padding_bottom = int(base_h * 0.06)
+
+        gap_between_sections = int(base_h * 0.04)
+
+        row_h = int(base_h * 0.08)
+
+        avg_box_h = int(base_h * 0.18)
+
         channels_total_h = len(channels) * row_h
-        
-        # L'altezza calcola lo spazio per i canali + il box AVG (68px) + i relativi padding
-        dynamic_card_h = 32 + channels_total_h + 22 + 68 + 32
+
+        dynamic_card_h = (
+            padding_top +
+            channels_total_h +
+            gap_between_sections +
+            avg_box_h +
+            padding_bottom
+        )
+
         panel = pygame.Rect(rect.x, rect.y + 10, rect.width, dynamic_card_h)
+
+        start_y = panel.y + padding_top
+
         # Disegno Card Principale (Flat)
         pygame.draw.rect(self._screen, C_INPUT_BG, panel, border_radius=14)
         pygame.draw.rect(self._screen, C_INPUT_BORDER, panel, width=1, border_radius=14)

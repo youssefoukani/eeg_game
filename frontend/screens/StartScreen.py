@@ -57,7 +57,7 @@ class StartScreen:
 
         center_text(s, "EEG BCI RUNNER", font_b, C_TEXT, 40)
 
-        divider(s, 100)
+        divider(s, HEADER_Y)
 
         card_w = 560
 

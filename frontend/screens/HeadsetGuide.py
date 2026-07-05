@@ -63,8 +63,7 @@ class HeadsetGuide:
         s.fill(C_BG)
 
         # ── 1. HEADER (Divider Superiore) ─────────────────────────────────────
-        divider_top = 100
-        divider(s, divider_top)
+        divider(s, HEADER_Y)
         center_text(s, "HEADSET FITTING GUIDE", font_b, C_TEXT, 38)
 
         # ── 2. FOOTER (Divider Inferiore e Bottone) ────────────────────────────
@@ -94,13 +93,24 @@ class HeadsetGuide:
         )
 
         # ── 3. AREA IMMAGINI (Centrata e con angoli smussati) ──────────────────
-        IMG_GAP = 16
-        PAD_X   = 20
-        
-        space_y_top = divider_top + 10
-        space_y_bottom = divider_bottom - 10
-        available_h = space_y_bottom - space_y_top
+        IMG_GAP = int(WINDOW_W * 0.02)   # distanza tra immagini
+        PAD_X   = int(WINDOW_W * 0.03)   # margine laterale
+        base_top = HEADER_Y
+
+        base_bottom = divider_bottom
+
+        available_h = base_bottom - base_top
+
         available_w = WINDOW_W - (PAD_X * 2)
+
+
+        vertical_margin = int(available_h * 0.03)
+        space_y_top = base_top + vertical_margin
+
+        space_y_bottom = base_bottom - vertical_margin
+
+        available_h = space_y_bottom - space_y_top
+
 
         n = len(self._panels)
         panel_w = (available_w - IMG_GAP * (n - 1)) // n
@@ -109,7 +119,13 @@ class HeadsetGuide:
         for surf in self._panels:
             ow, oh = surf.get_size()
             scale  = min(panel_w / ow, available_h / oh)
-            nw, nh = int(ow * 0.90*scale), int(oh * 0.90*scale)
+            scale = min(panel_w / ow, available_h / oh)
+
+            # piccolo padding interno uniforme (non arbitrario)
+
+            INNER_SCALE = 0.95
+
+            nw, nh = int(ow * scale * INNER_SCALE), int(oh * scale * INNER_SCALE)
             
             # 1. Ridimensiona l'immagine
             img_scaled = pygame.transform.smoothscale(surf, (nw, nh))
@@ -124,6 +140,8 @@ class HeadsetGuide:
 
         # Disegno dei pannelli
         for surf in scaled_panels:
-            img_y = space_y_top + (available_h - surf.get_height()) // 2
+            img_area_h = space_y_bottom - space_y_top
+
+            img_y = space_y_top + (img_area_h - surf.get_height()) // 2
             s.blit(surf, (x, img_y))
             x += surf.get_width() + IMG_GAP

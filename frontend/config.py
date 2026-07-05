@@ -158,3 +158,5 @@ FOCUS_RING_W = 2
  
 
 FOOTER_Y = int(WINDOW_H * 0.80)
+
+HEADER_Y = int(WINDOW_H * 0.1)

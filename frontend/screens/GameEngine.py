@@ -257,30 +257,30 @@ class GameEngine:
         arrow_color = C_CUE 
         
         if direction == "LEFT":
-            # Disegno di una freccia verso sinistra usando i poligoni di Pygame
+            # Freccia verso SINISTRA potenziata e ingrandita
             points = [
-                (center_x + 30, center_y - 15), # Coda superiore
-                (center_x - 10, center_y - 15), # Inizio punta sup
-                (center_x - 10, center_y - 30), # Punta esterna sup
-                (center_x - 40, center_y),      # Estremo punta
-                (center_x - 10, center_y + 30), # Punta esterna inf
-                (center_x - 10, center_y + 15), # Inizio punta inf
-                (center_x + 30, center_y + 15), # Coda inferiore
+                (center_x + 60, center_y - 25),  # Coda superiore (fusto più spesso)
+                (center_x - 15, center_y - 25),  # Inizio punta sup
+                (center_x - 15, center_y - 55),  # Punta esterna sup (molto più larga e visibile)
+                (center_x - 75, center_y),       # Estremo punta (esteso verso sinistra)
+                (center_x - 15, center_y + 55),  # Punta esterna inf
+                (center_x - 15, center_y + 25),  # Inizio punta inf
+                (center_x + 60, center_y + 25),  # Coda inferiore
             ]
-        else: # RIGHT
-            # Disegno di una freccia verso destra
+        else:  # RIGHT
+            # Freccia verso DESTRA potenziata e ingrandita
             points = [
-                (center_x - 30, center_y - 15),
-                (center_x + 10, center_y - 15),
-                (center_x + 10, center_y - 30),
-                (center_x + 40, center_y),
-                (center_x + 10, center_y + 30),
-                (center_x + 10, center_y + 15),
-                (center_x - 30, center_y + 15),
+                (center_x - 60, center_y - 25),  # Coda superiore
+                (center_x + 15, center_y - 25),  # Inizio punta sup
+                (center_x + 15, center_y - 55),  # Punta esterna sup
+                (center_x + 75, center_y),       # Estremo punta (esteso verso destra)
+                (center_x + 15, center_y + 55),  # Punta esterna inf
+                (center_x + 15, center_y + 25),  # Inizio punta inf
+                (center_x - 60, center_y + 25),  # Coda inferiore
             ]
             
             
-        
+        pygame.draw.polygon(self._screen, (0, 0, 0), points, 3)
         pygame.draw.polygon(self._screen, arrow_color, points)
 
         pygame.draw.polygon(self._screen, C_BG, points, 2)
@@ -288,9 +288,27 @@ class GameEngine:
         label = "LEFT" if direction == "LEFT" else "RIGHT"
         
 
-        text_surface = self.arrow_label_font.render(label, True, C_BORDEAUX)
+        text_color = (255, 255, 255)
+
+        outline_color = (20, 20, 20)   # nero molto scuro
+
+        outline_size = 1               # contorno molto sottile
+
+        text_surface = self.arrow_label_font.render(label, True, text_color)
 
         text_rect = text_surface.get_rect(center=(center_x, center_y))
+
+        # Contorno
+
+        for dx, dy in [(-outline_size, 0), (outline_size, 0),
+
+                    (0, -outline_size), (0, outline_size)]:
+
+            outline = self.arrow_label_font.render(label, True, outline_color)
+
+            self._screen.blit(outline, text_rect.move(dx, dy))
+
+        # Testo principale
 
         self._screen.blit(text_surface, text_rect)
 

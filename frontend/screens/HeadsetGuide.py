@@ -36,18 +36,26 @@ class HeadsetGuide:
                 print(f"[HeadsetGuide] Could not load {path}: {exc}")
         return panels
 
-    def run(self) -> None:
+    def run(self):
         while True:
             self._draw()
             pygame.display.flip()
             self._clock.tick(FPS)
+
             for ev in pygame.event.get():
                 _handle_quit(ev)
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_RETURN:
-                    return
-                if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+
+                if ev.type == pygame.KEYDOWN:
+                    if ev.key == pygame.K_RETURN:
+                        return "confirm"
+                    elif ev.key == pygame.K_ESCAPE:
+                        return "back"
+
+                elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     if self._btn_rect.collidepoint(ev.pos):
-                        return
+                        return "confirm"
+                    elif self._back_rect.collidepoint(ev.pos):
+                        return "back"
 
     def _draw(self) -> None:
         font_b, font, font_s = self._fonts
@@ -64,9 +72,26 @@ class HeadsetGuide:
         divider_bottom = center_pos[1] - 70
         divider(s, FOOTER_Y)
 
+        
+
         # Disegna il bottone e salva il rect locale
         from renderer import draw_button
-        self._btn_rect = draw_button(s, "ENTER — CONTINUE", font_b, center_pos, padding=28)
+        self._back_rect = draw_button(
+            s,
+            "BACK",
+            font_b,
+            (WINDOW_W // 2 - 130, FOOTER_Y + 75),
+            padding=28,
+            secondary=True,
+        )
+
+        self._btn_rect = draw_button(
+            s,
+            "CONFIRM",
+            font_b,
+            (WINDOW_W // 2 + 130, FOOTER_Y + 75),
+            padding=28,
+        )
 
         # ── 3. AREA IMMAGINI (Centrata e con angoli smussati) ──────────────────
         IMG_GAP = 16

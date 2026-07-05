@@ -16,24 +16,67 @@ import pygame
 from config import WINDOW_W, WINDOW_H
 from eeg_interface import EEGInterface
 from screens import HeadsetGuide, UserDataForm, SignalQualityCheck, FixationCross, StartScreen, GameEngine
-
-
 def main() -> None:
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
     pygame.display.set_caption("EEG BCI Runner — Motor Imagery Prototype")
     pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN])
 
-    participant = UserDataForm(screen).run()
-
-    HeadsetGuide(screen).run()
-
     eeg = EEGInterface()
-    SignalQualityCheck(screen, eeg).run()
-    StartScreen(screen, participant).run()
-    FixationCross(screen).run()
 
-    while GameEngine(screen, participant, eeg=eeg).run():
+    # Stato condiviso tra le schermate
+    state = {
+        "participant": None,
+    }
+
+    step = 0
+    STEPS = ["user_data", "headset_guide", "signal_quality", "start_screen", "fixation_cross"]
+
+    while step < len(STEPS):
+        current = STEPS[step]
+
+        if current == "user_data":
+            form = UserDataForm(screen)
+            # 🔴 Nota: se anche UserDataForm ora restituisce "back"/dati,
+            # bisogna adattare questa parte (vedi nota sotto)
+            result = form.run()
+            if result == "back":
+                # Prima schermata: non si può tornare oltre.
+                # Se vuoi che "back" qui equivalga a uscire dall'app:
+                break
+            state["participant"] = result
+            step += 1
+
+        elif current == "headset_guide":
+            result = HeadsetGuide(screen).run()
+            if result == "back":
+                step -= 1
+            else:
+                step += 1
+
+        elif current == "signal_quality":
+            result = SignalQualityCheck(screen, eeg).run()
+            if result == "back":
+                step -= 1
+            else:
+                step += 1
+
+        elif current == "start_screen":
+            result = StartScreen(screen, state["participant"]).run()
+            if result == "back":
+                step -= 1
+            else:
+                step += 1
+
+        elif current == "fixation_cross":
+            result = FixationCross(screen).run()
+            if result == "back":
+                step -= 1
+            else:
+                step += 1
+
+    # Fine sequenza pre-gioco: avvia il game loop
+    while GameEngine(screen, state["participant"], eeg=eeg).run():
         pass
 
     pygame.quit()

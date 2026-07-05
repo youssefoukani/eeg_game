@@ -28,13 +28,18 @@ class StartScreen:
                 _handle_quit(ev)
                 
                 # 1. Gestione della tastiera (Tasto INVIO)
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_RETURN:
-                    return
+                if ev.type == pygame.KEYDOWN:
+                    if ev.key == pygame.K_RETURN:
+                        return "confirm"
+                    elif ev.key == pygame.K_ESCAPE:
+                            return "back"
                     
                 # 2. Gestione del mouse (Click sinistro sul pulsante)
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     if self._btn_rect.collidepoint(ev.pos):
-                        return
+                        return "confirm"
+                    elif self._back_rect.collidepoint(ev.pos):
+                        return "back"
 
     def _draw(self) -> None:
 
@@ -242,19 +247,23 @@ class StartScreen:
 
         from renderer import draw_button
         divider(self._screen, FOOTER_Y )
+    
+
+        self._back_rect = draw_button(
+            s,
+            "BACK",
+            font_b,
+            (WINDOW_W // 2 - 130, FOOTER_Y + 75),
+            padding=28,
+            secondary=True,
+        )
 
         self._btn_rect = draw_button(
-
             s,
-
-            "START EXPERIMENT",
-
+            "START",
             font_b,
-
-            (WINDOW_W // 2, FOOTER_Y+75),
-
-            padding=32,
-
+            (WINDOW_W // 2 + 130, FOOTER_Y + 75),
+            padding=28,
         )
 
     

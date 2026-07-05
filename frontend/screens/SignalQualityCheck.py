@@ -15,36 +15,38 @@ class SignalQualityCheck:
         self._btn_rect = pygame.Rect(0, 0, 0, 0)
 
     def run(self):
-
         self._eeg.connect()
-
         while True:
-
-            rect_left = WINDOW_W*1//4
-            rect_width = WINDOW_W//2
-            rect_height= 520
+            rect_left = WINDOW_W * 1 // 4
+            rect_width = WINDOW_W // 2
+            rect_height = 520
             rect_top = 200
-            rect=pygame.Rect(rect_left, rect_top, rect_width, rect_height)
+            rect = pygame.Rect(rect_left, rect_top, rect_width, rect_height)
 
-            self._draw(rect)  # Usa il metodo di disegno del quality screen senza mostrare il pulsante
-
+            self._draw(rect)  # Usa il metodo di disegno del quality screen
             pygame.display.flip()
             self._clock.tick(FPS)
 
             for ev in pygame.event.get():
-
                 _handle_quit(ev)
 
                 if ev.type == pygame.KEYDOWN:
                     if ev.key == pygame.K_RETURN:
-                        return
+                        return "confirm"
+                    # 🔴 NUOVO: Esc = torna indietro (User control and freedom)
+                    elif ev.key == pygame.K_ESCAPE:
+                        return "back"
 
-                if ev.type == pygame.MOUSEBUTTONDOWN:
-                    if ev.button == 1 and self._btn_rect.collidepoint(ev.pos):
-                        return
+                if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                    if self._btn_rect.collidepoint(ev.pos):
+                        return "confirm"
+                    # 🔴 NUOVO: click sul pulsante "Indietro"
+                    elif self._back_rect.collidepoint(ev.pos):
+                        return "back"
 
     def _draw(self, rect: pygame.Rect = None):
         font_b, font, font_s = self._fonts
+        s = self._screen
 
         # ── Sfondo principale ────────────────────────────────────────────────
         self._screen.fill(C_BG)
@@ -157,17 +159,28 @@ class SignalQualityCheck:
         self._screen.blit(avg_perc, (avg_bar_x + avg_bar_w + 16, avg_perc_y))
 
 
-        btn_coord= (WINDOW_W // 2, FOOTER_Y+75)
 
-        divider(self._screen, FOOTER_Y )
+        divider(self._screen, FOOTER_Y)
 
-        
-        # ── Pulsante di continuazione ────────────────────────────────────────
+        # ── Pulsanti di navigazione ──────────────────────────────────────────
         from renderer import draw_button
-        self._btn_rect = draw_button(
-            self._screen,
-            "ENTER — CONTINUE",
+
+        # 🔴 FIX: questa è una schermata successiva, quindi default False
+        
+
+        self._back_rect = draw_button(
+            s,
+            "BACK",
             font_b,
-            btn_coord,
+            (WINDOW_W // 2 - 130, FOOTER_Y + 75),
+            padding=28,
+            secondary=True,
+        )
+
+        self._btn_rect = draw_button(
+            s,
+            "CONFIRM",
+            font_b,
+            (WINDOW_W // 2 + 130, FOOTER_Y + 75),
             padding=28,
         )

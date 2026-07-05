@@ -384,26 +384,41 @@ def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
         y += cycle
 
 
-def draw_button(surf: pygame.Surface, text: str, font, pos_center: tuple, padding: int = 20, hovered: bool = False) -> pygame.Rect:
+def draw_button(
+    surf: pygame.Surface,
+    text: str,
+    font,
+    pos_center: tuple,
+    padding: int = 20, #HO MESSO DIMENSIONI FISSE QUINDI togli tutte le variabili inutili
+    hovered: bool = False,
+    secondary: bool = False,
+) -> pygame.Rect:
     # 1. Renderizza il testo per calcolarne le dimensioni
-    text_surf = font.render(text, True, (255, 255, 255))
+    text_colour = C_TEXT if secondary else (255, 255, 255)
+    text_surf = font.render(text, True, text_colour)
     tw, th = text_surf.get_size()
 
     # 2. Crea il rettangolo dinamico centrato
-    btn_rect = pygame.Rect(0, 0, tw + padding * 2, th + padding)
+    btn_rect = pygame.Rect(0, 0, 150, 70)
     btn_rect.center = pos_center
 
-    # 3. Gestione colore flat (cambia solo la luminosità in hover)
-    colour = _clamp_colour(c + 25 for c in C_ACCENT) if hovered else C_ACCENT
-
-    # 4. Disegna lo sfondo del pulsante (pulito, senza ombre o linee 3D)
-    pygame.draw.rect(surf, colour, btn_rect, border_radius=8)
+    if secondary:
+        # Stile "outline": sfondo neutro, solo bordo, meno prominente
+        bg_colour = _clamp_colour(c + 15 for c in C_INPUT_BG) if hovered else C_INPUT_BG
+        pygame.draw.rect(surf, bg_colour, btn_rect, border_radius=8)
+        pygame.draw.rect(surf, C_INPUT_BORDER, btn_rect, 1, border_radius=8)
+    else:
+        # 3. Gestione colore flat (cambia solo la luminosità in hover)
+        colour = _clamp_colour(c + 25 for c in C_ACCENT) if hovered else C_ACCENT
+        # 4. Disegna lo sfondo del pulsante (pulito, senza ombre o linee 3D)
+        pygame.draw.rect(surf, colour, btn_rect, border_radius=8)
 
     # 5. Centra e disegna il testo
     text_pos = (btn_rect.centerx - tw // 2, btn_rect.centery - th // 2)
     surf.blit(text_surf, text_pos)
 
     return btn_rect
+
 
 def round_image(surface: pygame.Surface, radius: int) -> pygame.Surface:
     """Ritorna una copia della superficie con gli angoli smussati."""

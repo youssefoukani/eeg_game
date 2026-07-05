@@ -6,7 +6,7 @@ from config import *
 from models import ParticipantData
 from .utils import _handle_quit
 from renderer import make_fonts, center_text, divider
-
+import sys
 
 
 class UserDataForm:
@@ -44,6 +44,8 @@ class UserDataForm:
 
         self._rects: dict = {}   # key → pygame.Rect
 
+    # ── input ──────────────────────────────────────────────────────────────────
+
     def run(self) -> ParticipantData:
         while True:
             self._rects = {}
@@ -57,15 +59,19 @@ class UserDataForm:
                     if done:
                         return done
                 elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                    # 🔴 MODIFICA: Cattura l'esito del click (se restituisce ParticipantData)
                     done = self._handle_click(ev.pos)
                     if done:
                         return done
 
-    # ── input ──────────────────────────────────────────────────────────────────
+# ── input ──────────────────────────────────────────────────────────────────
 
     def _handle_key(self, ev: pygame.event.Event):
         k = ev.key
+
+        # 🔴 NUOVO: Esc = Annulla/Esci (equivalente tastiera del pulsante secondario)
+        if k == pygame.K_ESCAPE:
+            self._handle_back_or_exit()
+            return None
 
         # Navigation
         if k in (pygame.K_DOWN, pygame.K_TAB) and not (k == pygame.K_TAB and (pygame.key.get_mods() & pygame.KMOD_SHIFT)):
@@ -124,11 +130,26 @@ class UserDataForm:
                 elif key.startswith("edu_"):
                     self._focus   = self._F_EDU
                     self._edu_idx = int(key.split("_")[1])
-                # 🔴 MODIFICA: Se clicchi sul pulsante di conferma, avvia la validazione
                 elif key == "submit":
                     return self._validate()
+                # 🔴 NUOVO: Click sul pulsante "Annulla/Esci"
+                elif key == "back_exit":
+                    self._handle_back_or_exit()
                 break
         return None
+
+    # ── back / exit ──────────────────────────────────────────────────────────────
+
+    def _handle_back_or_exit(self) -> None:
+        is_first_screen = getattr(self, "_is_first_screen", True)
+
+        if is_first_screen:
+            pygame.quit()
+            sys.exit()
+        else:
+            self._go_back()
+
+
     # ── validation ─────────────────────────────────────────────────────────────
 
     def _validate(self):
@@ -139,7 +160,6 @@ class UserDataForm:
         if not age.isdigit() or not (1 <= int(age) <= 120):
             self._error = "Age must be a number between 1 and 120."; return None
         return ParticipantData(
-
             user_id=uid,
             age=age,
             sex=self._SEX[self._sex_idx],
@@ -331,11 +351,9 @@ class UserDataForm:
 
         y += 20
         draw_selector(self._EDU, self._edu_idx, self._F_EDU, "edu", y)
-
-        # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
         # FOOTER
         # ------------------------------------------------------------------
-        
 
         divider(s, FOOTER_Y)
 
@@ -350,12 +368,23 @@ class UserDataForm:
 
         from renderer import draw_button
 
+       
+
+        back_exit_btn_rect = draw_button(
+            s,
+            "QUIT",
+            font_b,
+            (WINDOW_W // 2 - 130, FOOTER_Y + 75),
+            padding=28,
+            secondary=True,
+        )
+        self._rects["back_exit"] = back_exit_btn_rect
+
         confirm_btn_rect = draw_button(
             s,
             "CONFIRM",
             font_b,
-            (WINDOW_W // 2, FOOTER_Y + 75),
+            (WINDOW_W // 2 + 130, FOOTER_Y + 75),
             padding=28,
         )
-
         self._rects["submit"] = confirm_btn_rect

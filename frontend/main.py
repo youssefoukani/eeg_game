@@ -75,9 +75,29 @@ def main() -> None:
             else:
                 step += 1
 
-    # Fine sequenza pre-gioco: avvia il game loop
-    while GameEngine(screen, state["participant"], eeg=eeg).run():
-        pass
+    MAX_PLAYS = 2
+    play_count = 0
+
+    while play_count < MAX_PLAYS:
+        if play_count == 1:
+            seed = 12
+        else:
+            seed = 42  # seconda partita → seed fisso
+
+        engine = GameEngine(
+            screen,
+            state["participant"],
+            eeg=eeg,
+            seed=seed,
+            play_count=play_count + 1,   # 1 = prima partita, 2 = seconda
+            max_plays=MAX_PLAYS,
+        )
+
+        want_restart = engine.run()
+        play_count += 1
+
+        if not want_restart:
+            break
 
     pygame.quit()
     sys.exit()

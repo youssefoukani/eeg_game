@@ -16,10 +16,14 @@ from renderer import center_text
 class GameEngine:
     """Runs one session. Returns True if the user requests a restart."""
 
-    def __init__(self, screen: pygame.Surface, participant: ParticipantData, eeg: EEGInterface = None):
+    def __init__(self, screen: pygame.Surface, participant: ParticipantData, seed: int = None, eeg: EEGInterface = None, play_count=1, max_plays=2):
         self._screen      = screen
         self._participant = participant
         self._eeg         = eeg or EEGInterface()
+        self._seed = seed
+        self._play_count = play_count
+        self._max_plays = max_plays
+
         self._fonts       = make_fonts()
         self.label_font = pygame.font.SysFont("Montserrat", 72, bold=True)
         self.arrow_label_font = pygame.font.SysFont("Montserrat", 24, bold=False)
@@ -36,7 +40,7 @@ class GameEngine:
     def run(self) -> bool:
         input_mgr  = InputManager(self._eeg, use_keyboard=True)
         player     = PlayerController()
-        obstacles  = ObstacleManager()
+        obstacles  = ObstacleManager(seed=self._seed)
         collisions = CollisionSystem()
         metrics    = MetricsLogger()
 
@@ -246,7 +250,7 @@ class GameEngine:
                     "all_participants_data.csv", 
                 )
                 metrics.print_report()
-                return ResultsScreen(self._screen, metrics, self._participant, csv_path).run()
+                return ResultsScreen(self._screen, metrics, self._participant, csv_path, self._play_count).run()
     # ─── 3. FUNZIONE DI DISEGNO DELLA FRECCIA ───
     def draw_cue_arrow(self, direction: str) -> None:
         """Disegna una freccia geometrica o testuale al centro dello schermo."""

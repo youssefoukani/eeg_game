@@ -1,4 +1,5 @@
 # ─── game_engine.py ───────────────────────────────────────────────────────────
+import math
 import time
 import pygame
 
@@ -28,6 +29,9 @@ class GameEngine:
         self.snapshot = None
         self.input_lock_until = 0
         self.feedback_text = ""
+
+        # Font piccolo e discreto per l'indicatore di stato EEG
+        self.eeg_font = pygame.font.SysFont("Montserrat", 16, bold=True)
 
     def run(self) -> bool:
         input_mgr  = InputManager(self._eeg, use_keyboard=True)
@@ -82,6 +86,12 @@ class GameEngine:
                     text_rect = text_surface.get_rect(center=(self._screen.get_width() // 2, y))
                     self._screen.blit(text_surface, text_rect)
                     y += text_surface.get_height() + line_spacing
+
+                # Anche durante la pausa il sistema resta "in ascolto":
+                # mostriamo comunque l'indicatore per non far pensare
+                # a un blocco del software.
+                self.draw_eeg_status()
+
                 pygame.display.flip()
 
                 if time.time() - self.pause_start_time >= self.PAUSE_DURATION:
@@ -225,6 +235,8 @@ class GameEngine:
             # draw_hud(self._screen, self._fonts, remaining,
             #          player.lane, metrics.collisions, metrics.avoidances)
 
+            self.draw_eeg_status()
+
             pygame.display.flip()
 
             if remaining <= 0:
@@ -282,6 +294,77 @@ class GameEngine:
 
         self._screen.blit(text_surface, text_rect)
 
+
+    def draw_eeg_status(self) -> None:
+        """Indicatore discreto che segnala che il sistema è vivo e in
+        ascolto del segnale EEG. Usa un "respiro" lento (sinusoide) invece
+        di un lampeggio secco, per non generare ansia nell'utente.
+
+        Riflette lo stato reale della connessione (EEGInterface._connected):
+        verde a respiro se connesso, X rossa statica se la connessione
+        manca. Un piccolo chip scuro semi-trasparente sta dietro
+        all'icona/testo per garantire contrasto anche su sfondi di gioco
+        chiari o verdi, dove altrimenti l'indicatore verde si perderebbe.
+        Non mostra nulla sulla qualità del segnale.
+        """
+        now = time.time()
+
+        connected = bool(getattr(self._eeg, "_connected", False))
+
+        dot_radius = 8
+        gap        = 8
+        pad_x      = 12
+        pad_y      = 7
+        margin     = 14
+
+        if connected:
+            # Respiro lento: ciclo di ~1.8s, mai completamente spento
+            # (evita l'effetto "flash" nervoso di un blink secco 50/50).
+            cycle = 1.8
+            pulse = (math.sin(now * 2 * math.pi / cycle) + 1) / 2  # 0..1
+            alpha = int(140 + 90 * pulse)  # range 140-230
+            color = (110, 230, 160)  # verde
+        else:
+            alpha = 255
+            color = (230, 90, 90)  # rosso
+
+        label = "EEG"
+        text_surface = self.eeg_font.render(label, True, color)
+        text_w, text_h = text_surface.get_size()
+
+        content_h = max(text_h, dot_radius * 2)
+        chip_w = pad_x * 2 + text_w + gap + dot_radius * 2
+        chip_h = pad_y * 2 + content_h
+
+        chip_x = self._screen.get_width() - margin - chip_w
+        chip_y = margin
+
+        # Chip scuro semi-trasparente: garantisce leggibilità anche se
+        # dietro c'è cielo/strada/erba di colore simile all'indicatore.
+        chip_surf = pygame.Surface((chip_w, chip_h), pygame.SRCALPHA)
+        pygame.draw.rect(chip_surf, (15, 20, 18, 184), chip_surf.get_rect(),
+                          border_radius=chip_h // 2)
+
+        text_y = (chip_h - text_h) // 2
+        chip_surf.blit(text_surface, (pad_x, text_y))
+
+        icon_cx = pad_x + text_w + gap + dot_radius
+        icon_cy = chip_h // 2
+
+        if connected:
+            dot_surf = pygame.Surface((dot_radius * 4, dot_radius * 4), pygame.SRCALPHA)
+            pygame.draw.circle(dot_surf, (*color, alpha), (dot_radius * 2, dot_radius * 2), dot_radius)
+            # Sottile anello chiaro per staccare il pallino dallo sfondo scuro del chip
+            pygame.draw.circle(dot_surf, (255, 255, 255, 60), (dot_radius * 2, dot_radius * 2), dot_radius, 2)
+            chip_surf.blit(dot_surf, (icon_cx - dot_radius * 2, icon_cy - dot_radius * 2))
+        else:
+            offset = dot_radius - 1
+            pygame.draw.line(chip_surf, color,
+                              (icon_cx - offset, icon_cy - offset), (icon_cx + offset, icon_cy + offset), 3)
+            pygame.draw.line(chip_surf, color,
+                              (icon_cx - offset, icon_cy + offset), (icon_cx + offset, icon_cy - offset), 3)
+
+        self._screen.blit(chip_surf, (chip_x, chip_y))
 
     def draw_feedback(self, screen, fonts, feedback_label, collisions, avoidances ) :
 

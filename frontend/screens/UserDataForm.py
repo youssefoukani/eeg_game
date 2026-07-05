@@ -1,12 +1,11 @@
 import time
-
 import pygame
+import sys
 
 from config import *
 from models import ParticipantData
 from .utils import _handle_quit
-from renderer import make_fonts, center_text, divider
-import sys
+from renderer import make_fonts, center_text, divider, draw_button
 
 
 class UserDataForm:
@@ -18,6 +17,7 @@ class UserDataForm:
       ← / →                      – cycle selector options
       BACKSPACE                  – delete last character
       ENTER                      – confirm and advance
+      ESC                        – ask to quit (with confirmation)
 
     Mouse:
       Click on any text-box / selector button to focus / select it.
@@ -42,6 +42,9 @@ class UserDataForm:
         self._focus   = 0
         self._error   = ""
 
+        self._confirm_quit = False
+        self._confirm_idx  = 1   # 0 = "Yes, Quit", 1 = "Cancel" (default sicuro)
+
         self._rects: dict = {}   # key → pygame.Rect
 
     # ── input ──────────────────────────────────────────────────────────────────
@@ -52,23 +55,42 @@ class UserDataForm:
             self._draw()
             pygame.display.flip()
             self._clock.tick(FPS)
+            
             for ev in pygame.event.get():
                 _handle_quit(ev)
+                
                 if ev.type == pygame.KEYDOWN:
                     done = self._handle_key(ev)
-                    if done:
+                    if done == "QUIT_FORM":
+                        return None  # Uscita pulita dal form
+                    elif done:
                         return done
+                        
                 elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     done = self._handle_click(ev.pos)
-                    if done:
+                    if done == "QUIT_FORM":
+                        return None  # Uscita pulita dal form
+                    elif done:
                         return done
 
-# ── input ──────────────────────────────────────────────────────────────────
+    # ── input ──────────────────────────────────────────────────────────────────
 
     def _handle_key(self, ev: pygame.event.Event):
         k = ev.key
 
-        # 🔴 NUOVO: Esc = Annulla/Esci (equivalente tastiera del pulsante secondario)
+        if self._confirm_quit:
+            if k == pygame.K_ESCAPE:
+                self._cancel_quit()
+            elif k in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_TAB):
+                self._confirm_idx = 1 - self._confirm_idx
+            elif k == pygame.K_RETURN:
+                if self._confirm_idx == 0:
+                    return self._do_quit()  # Ora restituisce il comando
+                else:
+                    self._cancel_quit()
+            return None
+
+        # Esc = Annulla/Esci
         if k == pygame.K_ESCAPE:
             self._handle_back_or_exit()
             return None
@@ -115,6 +137,21 @@ class UserDataForm:
 
     def _handle_click(self, pos: tuple):
         """Focus a field or toggle a selector option on mouse click."""
+
+        # 1. SE IL POPUP E' APERTO
+        # Ignoriamo del tutto il dizionario completo per evitare 
+        # che elementi nascosti "rubino" il click. Controlliamo 
+        # SOLO le coordinate esatte dei due bottoni del popup.
+        if self._confirm_quit:
+            if "confirm_quit_yes" in self._rects and self._rects["confirm_quit_yes"].collidepoint(pos):
+                return self._do_quit()
+            
+            if "confirm_quit_no" in self._rects and self._rects["confirm_quit_no"].collidepoint(pos):
+                self._cancel_quit()
+                
+            return None # Blocca qualsiasi altro click se il popup è aperto
+
+        # 2. SE IL POPUP E' CHIUSO (comportamento normale)
         for key, rect in self._rects.items():
             if rect.collidepoint(pos):
                 if key == "user_id":
@@ -132,7 +169,6 @@ class UserDataForm:
                     self._edu_idx = int(key.split("_")[1])
                 elif key == "submit":
                     return self._validate()
-                # 🔴 NUOVO: Click sul pulsante "Annulla/Esci"
                 elif key == "back_exit":
                     self._handle_back_or_exit()
                 break
@@ -144,11 +180,19 @@ class UserDataForm:
         is_first_screen = getattr(self, "_is_first_screen", True)
 
         if is_first_screen:
-            pygame.quit()
-            sys.exit()
+            self._confirm_quit = True
+            self._confirm_idx  = 1
         else:
             self._go_back()
 
+    def _do_quit(self):
+        # Inserisce un evento QUIT (lo stesso che si genera cliccando la X della finestra)
+        # nella coda di Pygame. La tua funzione _handle_quit lo intercetterà all'istante.
+        chiusura_evento = pygame.event.Event(pygame.QUIT)
+        pygame.event.post(chiusura_evento)
+
+    def _cancel_quit(self) -> None:
+        self._confirm_quit = False
 
     # ── validation ─────────────────────────────────────────────────────────────
 
@@ -175,48 +219,37 @@ class UserDataForm:
 
         s.fill(C_BG)
 
-        # ------------------------------------------------------------------
         # HEADER
-        # ------------------------------------------------------------------
         center_text(s, "PARTICIPANT REGISTRATION", font_b, C_TEXT, 38)
         divider(s, HEADER_Y)
 
-        # ------------------------------------------------------------------
-        # LAYOUT CONSTANTS (valori "naturali", verranno scalati se serve)
-        # ------------------------------------------------------------------
+        # LAYOUT CONSTANTS
         TOP_PAD = 35
         BOTTOM_PAD = 35
         LABEL_H = 24
-        BOX_H = 40
-        FIELD_GAP = 28          # spazio dopo ogni text box
-        SEL_LABEL_GAP = 22      # spazio medio label->selettore
-        SEL_H = 36
-        SEL_GAP = 30            # spazio dopo ogni selettore
+        BOX_H = 44
+        FIELD_GAP = 28
+        SEL_LABEL_GAP = 22
+        SEL_H = 44
+        SEL_GAP = 30
 
         n_fields = len(self._FIELDS)
 
-        # Altezza "naturale" del contenuto, cioè quella che verrebbe
-        # utilizzata se non ci fosse nessun vincolo di spazio
         natural_h = (
             TOP_PAD
             + n_fields * (LABEL_H + BOX_H + FIELD_GAP)
-            + 3 * (SEL_LABEL_GAP + SEL_H + SEL_GAP)  # sex, hand, edu
+            + 3 * (SEL_LABEL_GAP + SEL_H + SEL_GAP)
             + BOTTOM_PAD
         )
 
-        # ------------------------------------------------------------------
         # CARD CENTRALE
-        # ------------------------------------------------------------------
-        card_w = min(590, WINDOW_W - 40)  # margine laterale minimo
+        card_w = min(590, WINDOW_W - 40)
         card_x = WINDOW_W // 2 - card_w // 2
 
-        available_h = FOOTER_Y - HEADER_Y - 20  # margine sopra/sotto la card
+        available_h = FOOTER_Y - HEADER_Y - 20
 
-        # Se il contenuto naturale sta nello spazio disponibile, usiamo quello
-        # (con un minimo estetico); altrimenti scaliamo tutto verso il basso
-        # per farlo entrare comunque nella card, invece di farlo uscire.
         scale = min(1.0, available_h / natural_h) if natural_h > 0 else 1.0
-        scale = max(scale, 0.55)  # non scendere sotto una soglia leggibile
+        scale = max(scale, 0.55)
 
         card_h = min(int(natural_h * scale) + 20, available_h)
         card_y = HEADER_Y + (FOOTER_Y - HEADER_Y - card_h) // 2
@@ -236,9 +269,7 @@ class UserDataForm:
             "educational level": "Educational Level"
         }
 
-        # ------------------------------------------------------------------
         # TEXT FIELDS
-        # ------------------------------------------------------------------
         for i, key in enumerate(self._FIELDS):
 
             active = self._focus == i
@@ -252,7 +283,7 @@ class UserDataForm:
             s.blit(lbl, (field_x, y))
             y += int(LABEL_H * scale)
 
-            box_h = max(int(BOX_H * scale), 26)
+            box_h = max(int(BOX_H * scale), 40)
             box = pygame.Rect(field_x, y, field_w, box_h)
 
             pygame.draw.rect(
@@ -266,7 +297,7 @@ class UserDataForm:
                 s,
                 C_ACCENT if active else C_INPUT_BORDER,
                 box,
-                2 if active else 1,
+                3 if active else 1,
                 border_radius=6
             )
 
@@ -284,9 +315,7 @@ class UserDataForm:
 
             y += box_h + int(FIELD_GAP * scale)
 
-        # ------------------------------------------------------------------
         # SELECTOR
-        # ------------------------------------------------------------------
         def draw_selector(options, sel_idx, focus_idx, prefix, y_pos, height):
 
             active = self._focus == focus_idx
@@ -297,9 +326,7 @@ class UserDataForm:
             for i, opt in enumerate(options):
 
                 bx = field_x + i * (btn_w + spacing)
-
                 rect = pygame.Rect(bx, y_pos, btn_w, height)
-
                 selected = i == sel_idx
 
                 bg = (
@@ -314,12 +341,15 @@ class UserDataForm:
                     s,
                     C_ACCENT if active else C_INPUT_BORDER,
                     rect,
-                    2 if selected else 1,
+                    3 if selected else 1,
                     border_radius=6
                 )
 
+                # CORREZIONE: Rimossa l'icona Unicode non compatibile e sostituita con ">"
+                label_text = opt
+
                 ts = font_s.render(
-                    opt,
+                    label_text,
                     True,
                     C_TEXT if selected else C_MUTED
                 )
@@ -334,11 +364,9 @@ class UserDataForm:
 
                 self._rects[f"{prefix}_{i}"] = rect
 
-        sel_h = max(int(SEL_H * scale), 24)
+        sel_h = max(int(SEL_H * scale), 38)
 
-        # ------------------------------------------------------------------
         # SEX
-        # ------------------------------------------------------------------
         active = self._focus == self._F_SEX
         s.blit(
             font_s.render("Sex", True, C_ACCENT if active else C_TEXT),
@@ -348,9 +376,7 @@ class UserDataForm:
         draw_selector(self._SEX, self._sex_idx, self._F_SEX, "sex", y, sel_h)
         y += sel_h + int(SEL_GAP * scale)
 
-        # ------------------------------------------------------------------
         # HAND
-        # ------------------------------------------------------------------
         active = self._focus == self._F_HAND
         s.blit(
             font_s.render("Dominant Hand", True, C_ACCENT if active else C_TEXT),
@@ -360,9 +386,7 @@ class UserDataForm:
         draw_selector(self._HAND, self._hand_idx, self._F_HAND, "hand", y, sel_h)
         y += sel_h + int(SEL_GAP * scale)
 
-        # ------------------------------------------------------------------
         # EDUCATION
-        # ------------------------------------------------------------------
         active = self._focus == self._F_EDU
         s.blit(
             font_s.render("Educational Level", True, C_ACCENT if active else C_TEXT),
@@ -371,26 +395,68 @@ class UserDataForm:
         y += int((SEL_LABEL_GAP - 2) * scale)
         draw_selector(self._EDU, self._edu_idx, self._F_EDU, "edu", y, sel_h)
 
-        # ------------------------------------------------------------------
         # FOOTER
-        # ------------------------------------------------------------------
         divider(s, FOOTER_Y)
 
         if self._error:
-            center_text(s, self._error, font_s, C_WARNING, FOOTER_Y + 15)
+            # CORREZIONE: Sostituito \u26A0 con !
+            center_text(s, f"! {self._error}", font_s, C_WARNING, FOOTER_Y + 15)
 
-        from renderer import draw_button
-
+        # CORREZIONE: Sostituito \u26A0 con !
         back_exit_btn_rect = draw_button(
             s, "QUIT", font_b,
             (WINDOW_W // 2 - 130, FOOTER_Y + 75),
-            padding=28, secondary=True,
+            secondary=True,
         )
         self._rects["back_exit"] = back_exit_btn_rect
 
         confirm_btn_rect = draw_button(
             s, "CONFIRM", font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
-            padding=28,
         )
         self._rects["submit"] = confirm_btn_rect
+
+        if self._confirm_quit:
+            self._draw_confirm_quit_popup(font_b, font, font_s)
+
+    def _draw_confirm_quit_popup(self, font_b, font, font_s) -> None:
+        s = self._screen
+
+        overlay = pygame.Surface((WINDOW_W, WINDOW_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 160))
+        s.blit(overlay, (0, 0))
+
+        dlg_w, dlg_h = 460, 190
+        dlg_x = WINDOW_W // 2 - dlg_w // 2
+        dlg_y = WINDOW_H // 2 - dlg_h // 2
+        dlg = pygame.Rect(dlg_x, dlg_y, dlg_w, dlg_h)
+
+        pygame.draw.rect(s, C_INPUT_BG, dlg, border_radius=12)
+        pygame.draw.rect(s, C_INPUT_BORDER, dlg, 1, border_radius=12)
+
+        title = font.render("Are you sure you want to quit?", True, C_TEXT)
+        s.blit(title, (dlg.centerx - title.get_width() // 2, dlg_y + 28))
+
+        subtitle = font_s.render(
+            "Unsaved data will be lost.", True, C_MUTED
+        )
+        s.blit(subtitle, (dlg.centerx - subtitle.get_width() // 2, dlg_y + 62))
+
+        btn_y = dlg_y + dlg_h - 60
+
+        # CORREZIONE: Sostituito \u26A0 con ! per evitare crash nei calcoli di larghezza del font
+        yes_rect = draw_button(
+            s, "YES, QUIT", font_b,
+            (dlg.centerx - 100, btn_y),
+            secondary=True,
+        )
+        self._rects["confirm_quit_yes"] = yes_rect
+
+        cancel_rect = draw_button(
+            s, "CANCEL", font_b,
+            (dlg.centerx + 100, btn_y),
+        )
+        self._rects["confirm_quit_no"] = cancel_rect
+
+        highlight_rect = yes_rect if self._confirm_idx == 0 else cancel_rect
+        pygame.draw.rect(s, C_ACCENT, highlight_rect, 2, border_radius=8)

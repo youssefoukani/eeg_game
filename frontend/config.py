@@ -157,4 +157,4 @@ BORDER_W    = 1
 FOCUS_RING_W = 2
  
 
-FOOTER_Y = 800
+FOOTER_Y = int(WINDOW_H * 0.80)

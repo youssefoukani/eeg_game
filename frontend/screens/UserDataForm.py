@@ -179,16 +179,46 @@ class UserDataForm:
         # HEADER
         # ------------------------------------------------------------------
         center_text(s, "PARTICIPANT REGISTRATION", font_b, C_TEXT, 38)
-        
-        divider(s, HEADER_Y )
+        divider(s, HEADER_Y)
+
+        # ------------------------------------------------------------------
+        # LAYOUT CONSTANTS (valori "naturali", verranno scalati se serve)
+        # ------------------------------------------------------------------
+        TOP_PAD = 35
+        BOTTOM_PAD = 35
+        LABEL_H = 24
+        BOX_H = 40
+        FIELD_GAP = 28          # spazio dopo ogni text box
+        SEL_LABEL_GAP = 22      # spazio medio label->selettore
+        SEL_H = 36
+        SEL_GAP = 30            # spazio dopo ogni selettore
+
+        n_fields = len(self._FIELDS)
+
+        # Altezza "naturale" del contenuto, cioè quella che verrebbe
+        # utilizzata se non ci fosse nessun vincolo di spazio
+        natural_h = (
+            TOP_PAD
+            + n_fields * (LABEL_H + BOX_H + FIELD_GAP)
+            + 3 * (SEL_LABEL_GAP + SEL_H + SEL_GAP)  # sex, hand, edu
+            + BOTTOM_PAD
+        )
 
         # ------------------------------------------------------------------
         # CARD CENTRALE
         # ------------------------------------------------------------------
-        card_w = 590
+        card_w = min(590, WINDOW_W - 40)  # margine laterale minimo
         card_x = WINDOW_W // 2 - card_w // 2
-        card_h = int((FOOTER_Y - HEADER_Y) * 0.7)
 
+        available_h = FOOTER_Y - HEADER_Y - 20  # margine sopra/sotto la card
+
+        # Se il contenuto naturale sta nello spazio disponibile, usiamo quello
+        # (con un minimo estetico); altrimenti scaliamo tutto verso il basso
+        # per farlo entrare comunque nella card, invece di farlo uscire.
+        scale = min(1.0, available_h / natural_h) if natural_h > 0 else 1.0
+        scale = max(scale, 0.55)  # non scendere sotto una soglia leggibile
+
+        card_h = min(int(natural_h * scale) + 20, available_h)
         card_y = HEADER_Y + (FOOTER_Y - HEADER_Y - card_h) // 2
 
         card = pygame.Rect(card_x, card_y, card_w, card_h)
@@ -198,7 +228,7 @@ class UserDataForm:
 
         field_w = card_w - 60
         field_x = card_x + 30
-        y = card_y + 35
+        y = card_y + int(TOP_PAD * scale)
 
         labels = {
             "user_id": "User ID",
@@ -220,9 +250,10 @@ class UserDataForm:
             )
 
             s.blit(lbl, (field_x, y))
-            y += 24
+            y += int(LABEL_H * scale)
 
-            box = pygame.Rect(field_x, y, field_w, 40)
+            box_h = max(int(BOX_H * scale), 26)
+            box = pygame.Rect(field_x, y, field_w, box_h)
 
             pygame.draw.rect(
                 s,
@@ -247,16 +278,16 @@ class UserDataForm:
                 C_TEXT
             )
 
-            s.blit(txt, (box.x + 12, box.y + 9))
+            s.blit(txt, (box.x + 12, box.y + max(box_h - txt.get_height(), 0) // 2))
 
             self._rects[key] = box
 
-            y += 68
+            y += box_h + int(FIELD_GAP * scale)
 
         # ------------------------------------------------------------------
         # SELECTOR
         # ------------------------------------------------------------------
-        def draw_selector(options, sel_idx, focus_idx, prefix, y_pos):
+        def draw_selector(options, sel_idx, focus_idx, prefix, y_pos, height):
 
             active = self._focus == focus_idx
 
@@ -267,7 +298,7 @@ class UserDataForm:
 
                 bx = field_x + i * (btn_w + spacing)
 
-                rect = pygame.Rect(bx, y_pos, btn_w, 36)
+                rect = pygame.Rect(bx, y_pos, btn_w, height)
 
                 selected = i == sel_idx
 
@@ -303,88 +334,62 @@ class UserDataForm:
 
                 self._rects[f"{prefix}_{i}"] = rect
 
+        sel_h = max(int(SEL_H * scale), 24)
+
         # ------------------------------------------------------------------
         # SEX
         # ------------------------------------------------------------------
         active = self._focus == self._F_SEX
         s.blit(
-            font_s.render(
-                "Sex",
-                True,
-                C_ACCENT if active else C_TEXT
-            ),
+            font_s.render("Sex", True, C_ACCENT if active else C_TEXT),
             (field_x, y)
         )
-
-        y += 24
-        draw_selector(self._SEX, self._sex_idx, self._F_SEX, "sex", y)
-        y += 66
+        y += int(SEL_LABEL_GAP * scale)
+        draw_selector(self._SEX, self._sex_idx, self._F_SEX, "sex", y, sel_h)
+        y += sel_h + int(SEL_GAP * scale)
 
         # ------------------------------------------------------------------
         # HAND
         # ------------------------------------------------------------------
         active = self._focus == self._F_HAND
         s.blit(
-            font_s.render(
-                "Dominant Hand",
-                True,
-                C_ACCENT if active else C_TEXT
-            ),
+            font_s.render("Dominant Hand", True, C_ACCENT if active else C_TEXT),
             (field_x, y)
         )
-
-        y += 20
-        draw_selector(self._HAND, self._hand_idx, self._F_HAND, "hand", y)
-        y += 66
+        y += int((SEL_LABEL_GAP - 2) * scale)
+        draw_selector(self._HAND, self._hand_idx, self._F_HAND, "hand", y, sel_h)
+        y += sel_h + int(SEL_GAP * scale)
 
         # ------------------------------------------------------------------
         # EDUCATION
         # ------------------------------------------------------------------
         active = self._focus == self._F_EDU
         s.blit(
-            font_s.render(
-                "Educational Level",
-                True,
-                C_ACCENT if active else C_TEXT
-            ),
+            font_s.render("Educational Level", True, C_ACCENT if active else C_TEXT),
             (field_x, y)
         )
+        y += int((SEL_LABEL_GAP - 2) * scale)
+        draw_selector(self._EDU, self._edu_idx, self._F_EDU, "edu", y, sel_h)
 
-        y += 20
-        draw_selector(self._EDU, self._edu_idx, self._F_EDU, "edu", y)
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # FOOTER
         # ------------------------------------------------------------------
-
         divider(s, FOOTER_Y)
 
         if self._error:
-            center_text(
-                s,
-                self._error,
-                font_s,
-                C_WARNING,
-                FOOTER_Y + 15,
-            )
+            center_text(s, self._error, font_s, C_WARNING, FOOTER_Y + 15)
 
         from renderer import draw_button
 
-       
-
         back_exit_btn_rect = draw_button(
-            s,
-            "QUIT",
-            font_b,
+            s, "QUIT", font_b,
             (WINDOW_W // 2 - 130, FOOTER_Y + 75),
-            padding=28,
-            secondary=True,
+            padding=28, secondary=True,
         )
         self._rects["back_exit"] = back_exit_btn_rect
 
         confirm_btn_rect = draw_button(
-            s,
-            "CONFIRM",
-            font_b,
+            s, "CONFIRM", font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
             padding=28,
         )

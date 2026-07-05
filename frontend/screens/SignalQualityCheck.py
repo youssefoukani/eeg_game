@@ -17,11 +17,16 @@ class SignalQualityCheck:
     def run(self):
         self._eeg.connect()
         while True:
-            rect_left = WINDOW_W * 1 // 4
-            rect_width = WINDOW_W // 2
-            rect_height = 520
-            rect_top = 200
-            rect = pygame.Rect(rect_left, rect_top, rect_width, rect_height)
+            rect_width = WINDOW_W * 0.50
+            rect_left = WINDOW_W * 0.25
+
+            rect_top = HEADER_Y + int(WINDOW_H * 0.04)
+
+            rect_height = FOOTER_Y - rect_top - int(WINDOW_H * 0.04)
+
+            rect = pygame.Rect(int(rect_left), int(rect_top),
+
+                            int(rect_width), int(rect_height))
 
             self._draw(rect)  # Usa il metodo di disegno del quality screen
             pygame.display.flip()

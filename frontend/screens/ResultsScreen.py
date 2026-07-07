@@ -81,12 +81,15 @@ class ResultsScreen:
         s.blit(font.render("Summary", True, C_ACCENT), (card.x + 20, y))
         y += 38
 
+        success_rate = m.avoidances / (m.collisions + m.avoidances) if (m.collisions + m.avoidances) > 0 else 0
+
         rows = [
             ("Participant", self._participant.user_id, C_TEXT),
             ("Total obstacles", str(m.collisions + m.avoidances), C_TEXT),
             ("Collisions", str(m.collisions), C_WARNING),
             ("Successful avoids", str(m.avoidances), C_ACCENT),
             ("Lane changes", str(m.lane_changes), C_TEXT),
+            ("Success Rate", f"{success_rate:.2%}", C_ACCENT),
         ]
 
         for label, value, color in rows:
@@ -99,15 +102,8 @@ class ResultsScreen:
         pygame.draw.line(s, C_INPUT_BORDER, (card.x + 20, y), (card.right - 20, y), 1)
         y += 16
 
-        s.blit(font_s.render("CSV", True, C_MUTED), (card.x + 30, y))
-        csv_value = font_s.render(str(self._csv_path), True, C_TEXT)
-        max_w = card.width - 60
-        if csv_value.get_width() > max_w:
-            path_str = str(self._csv_path)
-            while font_s.size("…" + path_str)[0] > max_w and len(path_str) > 1:
-                path_str = path_str[1:]
-            csv_value = font_s.render("…" + path_str, True, C_TEXT)
-        s.blit(csv_value, (card.right - 30 - csv_value.get_width(), y))
+        
+        
 
         # ==========================================================
         # FOOTER

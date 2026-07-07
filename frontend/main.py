@@ -1,21 +1,10 @@
-# ─── main.py ──────────────────────────────────────────────────────────────────
-# Entry point.
-#
-# Pre-game pipeline:
-#   1. UserDataForm       – participant registration
-#   2. SignalQualityCheck – EEG OSC connection + channel quality
-#   3. StartScreen        – instructions + SPACE to begin
-#   4. FixationCross      – resting-state EEG baseline
-#
-# Run:  python main.py
-# Deps: pip install pygame python-osc
-
 import sys
 import pygame
 
 from config import WINDOW_W, WINDOW_H
 from eeg_interface import EEGInterface
 from screens import HeadsetGuide, UserDataForm, SignalQualityCheck, FixationCross, StartScreen, GameEngine
+
 def main() -> None:
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
@@ -24,80 +13,97 @@ def main() -> None:
 
     eeg = EEGInterface()
 
-    # Stato condiviso tra le schermate
-    state = {
-        "participant": None,
-    }
+    # Ciclo principale dell'applicazione (permette di tornare al menu)
+    while True:
+        # Stato condiviso tra le schermate ripristinato ad ogni avvio
+        state = {
+            "participant": None,
+        }
 
-    step = 0
-    STEPS = ["user_data", "headset_guide", "signal_quality", "start_screen", "fixation_cross"]
+        step = 0
+        STEPS = ["user_data", "headset_guide", "signal_quality", "start_screen", "fixation_cross"]
 
-    while step < len(STEPS):
-        current = STEPS[step]
+        # FASE 1: Schermate di setup
+        while step < len(STEPS):
+            current = STEPS[step]
 
-        if current == "user_data":
-            form = UserDataForm(screen)
-            # 🔴 Nota: se anche UserDataForm ora restituisce "back"/dati,
-            # bisogna adattare questa parte (vedi nota sotto)
-            result = form.run()
-            if result == "back":
-                # Prima schermata: non si può tornare oltre.
-                # Se vuoi che "back" qui equivalga a uscire dall'app:
-                break
-            state["participant"] = result
-            step += 1
-
-        elif current == "headset_guide":
-            result = HeadsetGuide(screen).run()
-            if result == "back":
-                step -= 1
-            else:
+            if current == "user_data":
+                form = UserDataForm(screen)
+                result = form.run()
+                if result == "back":
+                    # Se chiudi l'app nella primissima schermata, esce completamente
+                    pygame.quit()
+                    sys.exit()
+                state["participant"] = result
                 step += 1
 
-        elif current == "signal_quality":
-            result = SignalQualityCheck(screen, eeg).run()
-            if result == "back":
-                step -= 1
+            elif current == "headset_guide":
+                result = HeadsetGuide(screen).run()
+                if result == "back":
+                    step -= 1
+                else:
+                    step += 1
+
+            elif current == "signal_quality":
+                result = SignalQualityCheck(screen, eeg).run()
+                if result == "back":
+                    step -= 1
+                else:
+                    step += 1
+
+            elif current == "start_screen":
+                result = StartScreen(screen, state["participant"]).run()
+                if result == "back":
+                    step -= 1
+                else:
+                    step += 1
+
+            elif current == "fixation_cross":
+                result = FixationCross(screen).run()
+                if result == "back":
+                    step -= 1
+                else:
+                    step += 1
+
+        # FASE 2: Partite
+        MAX_PLAYS = 2
+        play_count = 0
+        quit_to_menu = False
+
+        while play_count < MAX_PLAYS:
+            if play_count == 1:
+                seed = 12
             else:
-                step += 1
+                seed = 42  # seconda partita → seed fisso
 
-        elif current == "start_screen":
-            result = StartScreen(screen, state["participant"]).run()
-            if result == "back":
-                step -= 1
-            else:
-                step += 1
+            engine = GameEngine(
+                screen,
+                state["participant"],
+                eeg=eeg,
+                seed=seed,
+                play_count=play_count + 1,   # 1 = prima partita, 2 = seconda
+                max_plays=MAX_PLAYS,
+            )
 
-        elif current == "fixation_cross":
-            result = FixationCross(screen).run()
-            if result == "back":
-                step -= 1
-            else:
-                step += 1
+            result = engine.run()
 
-    MAX_PLAYS = 2
-    play_count = 0
+            # Gestione dell'esito della partita
+            if result == "quit_to_menu":
+                quit_to_menu = True
+                break  # Interrompe le partite correnti
+            elif result is False:
+                # Se il giocatore ha cliccato la X rossa per chiudere la finestra
+                pygame.quit()
+                sys.exit()
 
-    while play_count < MAX_PLAYS:
-        if play_count == 1:
-            seed = 12
-        else:
-            seed = 42  # seconda partita → seed fisso
+            play_count += 1
 
-        engine = GameEngine(
-            screen,
-            state["participant"],
-            eeg=eeg,
-            seed=seed,
-            play_count=play_count + 1,   # 1 = prima partita, 2 = seconda
-            max_plays=MAX_PLAYS,
-        )
+        # Se l'utente ha abbandonato con 'Q', il ciclo while True ricomincia dall'inizio
+        if quit_to_menu:
+            continue
 
-        want_restart = engine.run()
-        play_count += 1
-
-        if not want_restart:
-            break
+        # Se tutte le partite sono state completate normalmente, usciamo
+        break
 
     pygame.quit()
     sys.exit()

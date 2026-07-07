@@ -34,6 +34,16 @@ class GameEngine:
         self.input_lock_until = 0
         self.feedback_text = ""
 
+        # Pausa manuale: attivabile dall'utente con ESC o SPAZIO in qualsiasi
+        # momento della partita (a differenza di self.is_paused, che è la
+        # pausa AUTOMATICA post-collisione). Il tempo di gioco resta fermo
+        # finché non si riprende, perché session_start viene spostato in
+        # avanti della durata esatta della pausa al momento della ripresa.
+        self.menu_paused = False
+        self.menu_pause_start = 0.0
+        self.menu_pause_snapshot = None
+        self.pause_font = pygame.font.SysFont("Montserrat", 30, bold=True)
+
         # Font piccolo e discreto per l'indicatore di stato EEG
         self.eeg_font = pygame.font.SysFont("Montserrat", 16, bold=True)
 
@@ -54,8 +64,6 @@ class GameEngine:
         while True:
 
             dt        = clock.tick(FPS) / 1000.0
-            game_time = time.time() - session_start
-            remaining = max(0.0, MATCH_DURATION - game_time)
 
             events = pygame.event.get()
 
@@ -66,9 +74,50 @@ class GameEngine:
 
                     return False
 
-                if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
+                if ev.type == pygame.KEYDOWN:
 
-                    return False
+                    if self.menu_paused:
+                        # Già in pausa: SPAZIO o ESC riprendono, Q abbandona.
+                        if ev.key in (pygame.K_ESCAPE, pygame.K_SPACE):
+                            # Sposta session_start in avanti della durata
+                            # esatta della pausa, così game_time (e quindi
+                            # il timer della partita) riparte esattamente
+                            # da dove si era fermato, senza "saltare".
+                            session_start += time.time() - self.menu_pause_start
+                            self.menu_paused = False
+                            self.menu_pause_snapshot = None
+                            # Svuota la coda eventi per evitare che un tasto
+                            # premuto durante la pausa causi azioni indesiderate
+                            # (es. cambio corsia) appena il gioco riparte.
+                            pygame.event.clear()
+                        elif ev.key == pygame.K_q:
+                            return "quit_to_menu"
+
+                    elif not self.is_paused:
+                        # Non siamo già nella pausa automatica post-collisione:
+                        # ESC o SPAZIO aprono il menu di pausa manuale.
+                        if ev.key in (pygame.K_ESCAPE, pygame.K_SPACE):
+                            self.menu_paused = True
+                            self.menu_pause_start = time.time()
+                            self.menu_pause_snapshot = self._screen.copy()
+
+            if self.menu_paused:
+                # Il gioco resta congelato sull'ultimo frame: nessun
+                # aggiornamento di logica, nessuno scorrimento del tempo.
+                self._screen.blit(self.menu_pause_snapshot, (0, 0))
+                self.draw_pause_menu()
+                self.draw_eeg_status()
+                pygame.display.flip()
+                continue
+
+            # IMPORTANTE: calcolati SOLO qui, dopo aver processato gli eventi
+            # (quindi dopo l'eventuale correzione di session_start alla
+            # ripresa dalla pausa). Calcolarli prima userebbe ancora il
+            # vecchio session_start sul frame esatto della ripresa, dando un
+            # game_time enorme (comprensivo di tutta la pausa) e facendo
+            # risultare la partita finita di colpo.
+            game_time = time.time() - session_start
+            remaining = max(0.0, MATCH_DURATION - game_time)
 
             if self.is_paused:
                 # 1. Ripristina lo stato del gioco (cancella il timer precedente)
@@ -316,6 +365,31 @@ class GameEngine:
 
         self._screen.blit(text_surface, text_rect)
 
+
+    def draw_pause_menu(self) -> None:
+        """Overlay del menu di pausa manuale, disegnato sopra l'ultimo frame
+        congelato. Mostra i tasti per riprendere (SPAZIO/ESC) o abbandonare
+        la partita (Q)."""
+        overlay = pygame.Surface(self._screen.get_size(), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        self._screen.blit(overlay, (0, 0))
+
+        cx = self._screen.get_width() // 2
+        y = self._screen.get_height() // 2 - 90
+
+        title_surf = self.label_font.render("PAUSA", True, (255, 255, 255))
+        title_rect = title_surf.get_rect(center=(cx, y))
+        self._screen.blit(title_surf, title_rect)
+        y += title_surf.get_height() + 34
+
+        resume_surf = self.pause_font.render("SPAZIO / ESC   -   Riprendi", True, C_OK)
+        resume_rect = resume_surf.get_rect(center=(cx, y))
+        self._screen.blit(resume_surf, resume_rect)
+        y += resume_surf.get_height() + 22
+
+        quit_surf = self.pause_font.render("Q   -   Abbandona partita", True, C_BORDEAUX)
+        quit_rect = quit_surf.get_rect(center=(cx, y))
+        self._screen.blit(quit_surf, quit_rect)
 
     def draw_eeg_status(self) -> None:
         """Indicatore discreto che segnala che il sistema è vivo e in

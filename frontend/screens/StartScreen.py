@@ -3,7 +3,7 @@ import pygame
 from config import *
 from models import ParticipantData
 
-from renderer import make_fonts, center_text, divider
+from renderer import make_fonts, center_text, divider, _animate_click
 from .utils import _handle_quit
 
 class StartScreen:
@@ -15,6 +15,9 @@ class StartScreen:
         self._fonts       = make_fonts()
         self._clock       = pygame.time.Clock()
         self._btn_rect    = pygame.Rect(0, 0, 0, 0)
+        self._clicked_btn = None
+
+        self._animate_click = _animate_click.__get__(self)  # Bind the method to the instance
 
     def run(self) -> None:
         self._btn_rect = pygame.Rect(0, 0, 0, 0)
@@ -30,15 +33,19 @@ class StartScreen:
                 # 1. Gestione della tastiera (Tasto INVIO)
                 if ev.type == pygame.KEYDOWN:
                     if ev.key == pygame.K_RETURN:
+                        self._animate_click("confirm")
                         return "confirm"
                     elif ev.key == pygame.K_ESCAPE:
+                            self._animate_click("back")
                             return "back"
                     
                 # 2. Gestione del mouse (Click sinistro sul pulsante)
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     if self._btn_rect.collidepoint(ev.pos):
+                        self._animate_click("confirm")
                         return "confirm"
                     elif self._back_rect.collidepoint(ev.pos):
+                        self._animate_click("back")
                         return "back"
 
     def _draw(self) -> None:
@@ -254,8 +261,8 @@ class StartScreen:
             "BACK",
             font_b,
             (WINDOW_W // 2 - 130, FOOTER_Y + 75),
-            padding=28,
             secondary=True,
+            pressed=(self._clicked_btn == "back")
         )
 
         self._btn_rect = draw_button(
@@ -263,7 +270,7 @@ class StartScreen:
             "START",
             font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
-            padding=28,
+            pressed=(self._clicked_btn == "confirm")
         )
 
     

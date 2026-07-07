@@ -1,7 +1,7 @@
 import pygame
 
 from config import *
-from renderer import make_fonts, divider, center_text, round_image
+from renderer import make_fonts, divider, center_text, round_image, _animate_click
 
 from .utils import _handle_quit
 
@@ -23,6 +23,9 @@ class HeadsetGuide:
         self._btn_rect = pygame.Rect(0, 0, 0, 0)
         self._panels   = self._load_panels()
         self._rects = {}
+
+        self._animate_click = _animate_click.__get__(self)  # Bind the method to the instance
+        self._clicked_btn = None
     def _load_panels(self) -> list:
         import os
         panels = []
@@ -35,7 +38,8 @@ class HeadsetGuide:
             except Exception as exc:
                 print(f"[HeadsetGuide] Could not load {path}: {exc}")
         return panels
-
+    
+    
     def run(self):
         while True:
             self._draw()
@@ -47,14 +51,18 @@ class HeadsetGuide:
 
                 if ev.type == pygame.KEYDOWN:
                     if ev.key == pygame.K_RETURN:
+                        self._animate_click("confirm")
                         return "confirm"
                     elif ev.key == pygame.K_ESCAPE:
+                        self._animate_click("back")
                         return "back"
 
                 elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     if self._btn_rect.collidepoint(ev.pos):
+                        self._animate_click("confirm")
                         return "confirm"
                     elif self._back_rect.collidepoint(ev.pos):
+                        self._animate_click("back")
                         return "back"
 
     def _draw(self) -> None:
@@ -80,8 +88,8 @@ class HeadsetGuide:
             "BACK",
             font_b,
             (WINDOW_W // 2 - 130, FOOTER_Y + 75),
-            padding=28,
             secondary=True,
+            pressed=(self._clicked_btn == "back")
         )
 
         self._btn_rect = draw_button(
@@ -89,7 +97,7 @@ class HeadsetGuide:
             "CONFIRM",
             font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
-            padding=28,
+            pressed=(self._clicked_btn == "confirm")
         )
 
         # ── 3. AREA IMMAGINI (Centrata e con angoli smussati) ──────────────────

@@ -389,28 +389,35 @@ def draw_button(
     text: str,
     font,
     pos_center: tuple,
-    padding: int = 20, #HO MESSO DIMENSIONI FISSE QUINDI togli tutte le variabili inutili
     hovered: bool = False,
     secondary: bool = False,
+    pressed: bool = False,  # Nuovo parametro per gestire il click
 ) -> pygame.Rect:
-    # 1. Renderizza il testo per calcolarne le dimensioni
+    # 1. Renderizza il testo
     text_colour = C_WARNING if secondary else (255, 255, 255)
     text_surf = font.render(text, True, text_colour)
     tw, th = text_surf.get_size()
 
-    # 2. Crea il rettangolo dinamico centrato
+    # 2. Rettangolo fisso (150x70) centrato
     btn_rect = pygame.Rect(0, 0, 150, 70)
     btn_rect.center = pos_center
 
     if secondary:
-        # Stile "outline": sfondo neutro, solo bordo, meno prominente
-        bg_colour = _clamp_colour(c + 15 for c in C_INPUT_BG) if hovered else C_INPUT_BG
+        # Se è premuto, scuriamo o schiariamo lo sfondo
+        if pressed:
+            bg_colour = _clamp_colour(c + 40 for c in C_INPUT_BG)
+        else:
+            bg_colour = _clamp_colour(c + 15 for c in C_INPUT_BG) if hovered else C_INPUT_BG
+            
         pygame.draw.rect(surf, bg_colour, btn_rect, border_radius=8)
-        pygame.draw.rect(surf, C_WARNING, btn_rect, 1, border_radius=8)
+        pygame.draw.rect(surf, C_WARNING, btn_rect, 2 if pressed else 1, border_radius=8)
     else:
-        # 3. Gestione colore flat (cambia solo la luminosità in hover)
-        colour = _clamp_colour(c + 25 for c in C_ACCENT) if hovered else C_ACCENT
-        # 4. Disegna lo sfondo del pulsante (pulito, senza ombre o linee 3D)
+        # Pulsante primario: cambia colore se premuto (es. diventa più chiaro o scuro)
+        if pressed:
+            colour = _clamp_colour(c - 30 for c in C_ACCENT) # Più scuro al click
+        else:
+            colour = _clamp_colour(c + 25 for c in C_ACCENT) if hovered else C_ACCENT
+            
         pygame.draw.rect(surf, colour, btn_rect, border_radius=8)
 
     # 5. Centra e disegna il testo
@@ -418,7 +425,6 @@ def draw_button(
     surf.blit(text_surf, text_pos)
 
     return btn_rect
-
 
 def round_image(surface: pygame.Surface, radius: int) -> pygame.Surface:
     """Ritorna una copia della superficie con gli angoli smussati."""
@@ -434,3 +440,12 @@ def round_image(surface: pygame.Surface, radius: int) -> pygame.Surface:
     image = surface.copy()
     image.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
     return image
+
+def _animate_click(self, btn_key: str):
+        """Illumina il pulsante per 150ms prima di procedere."""
+        self._clicked_btn = btn_key
+        self._draw()
+        pygame.display.flip()
+        
+        pygame.time.delay(210)  # Breve pausa per mostrare il feedback visivo
+        self._clicked_btn = None

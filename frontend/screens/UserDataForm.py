@@ -5,7 +5,7 @@ import sys
 from config import *
 from models import ParticipantData
 from .utils import _handle_quit
-from renderer import make_fonts, center_text, divider, draw_button
+from renderer import make_fonts, center_text, divider, draw_button, _animate_click
 
 
 class UserDataForm:
@@ -42,10 +42,14 @@ class UserDataForm:
         self._focus   = 0
         self._error   = ""
 
+        self._animate_click = _animate_click.__get__(self)  # Bind the method to the instance
+
         self._confirm_quit = False
         self._confirm_idx  = 1   # 0 = "Yes, Quit", 1 = "Cancel" (default sicuro)
 
         self._rects: dict = {}   # key → pygame.Rect
+
+        self._clicked_btn = None
 
     # ── input ──────────────────────────────────────────────────────────────────
 
@@ -80,18 +84,21 @@ class UserDataForm:
 
         if self._confirm_quit:
             if k == pygame.K_ESCAPE:
+                self._animate_click("confirm_quit_no")
                 self._cancel_quit()
             elif k in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_TAB):
                 self._confirm_idx = 1 - self._confirm_idx
             elif k == pygame.K_RETURN:
-                if self._confirm_idx == 0:
+
+                
+                    self._animate_click("confirm_quit_yes")
                     return self._do_quit()  # Ora restituisce il comando
-                else:
-                    self._cancel_quit()
+                
             return None
 
         # Esc = Annulla/Esci
         if k == pygame.K_ESCAPE:
+            self._animate_click("back_exit")
             self._handle_back_or_exit()
             return None
 
@@ -103,6 +110,7 @@ class UserDataForm:
 
         # Confirm
         elif k == pygame.K_RETURN:
+            self._animate_click("submit")
             return self._validate()
 
         # Selector cycling
@@ -136,22 +144,19 @@ class UserDataForm:
         return None
 
     def _handle_click(self, pos: tuple):
-        """Focus a field or toggle a selector option on mouse click."""
-
         # 1. SE IL POPUP E' APERTO
-        # Ignoriamo del tutto il dizionario completo per evitare 
-        # che elementi nascosti "rubino" il click. Controlliamo 
-        # SOLO le coordinate esatte dei due bottoni del popup.
         if self._confirm_quit:
             if "confirm_quit_yes" in self._rects and self._rects["confirm_quit_yes"].collidepoint(pos):
+                self._animate_click("confirm_quit_yes") # <--- ANIMAZIONE
                 return self._do_quit()
             
             if "confirm_quit_no" in self._rects and self._rects["confirm_quit_no"].collidepoint(pos):
+                self._animate_click("confirm_quit_no")  # <--- ANIMAZIONE
                 self._cancel_quit()
                 
-            return None # Blocca qualsiasi altro click se il popup è aperto
+            return None
 
-        # 2. SE IL POPUP E' CHIUSO (comportamento normale)
+        # 2. SE IL POPUP E' CHIUSO
         for key, rect in self._rects.items():
             if rect.collidepoint(pos):
                 if key == "user_id":
@@ -168,12 +173,19 @@ class UserDataForm:
                     self._focus   = self._F_EDU
                     self._edu_idx = int(key.split("_")[1])
                 elif key == "submit":
+                    # Prima controlliamo se valida (evita l'animazione se c'è un errore di testo)
+                    uid = self._texts["user_id"].strip()
+                    age = self._texts["age"].strip()
+                    if not uid or not age.isdigit() or not (1 <= int(age) <= 120):
+                        return self._validate() # Mostra l'errore standard direttamente
+                    
+                    self._animate_click("submit") # <--- ANIMAZIONE
                     return self._validate()
                 elif key == "back_exit":
+                    self._animate_click("back_exit") # <--- ANIMAZIONE
                     self._handle_back_or_exit()
                 break
         return None
-
     # ── back / exit ──────────────────────────────────────────────────────────────
 
     def _handle_back_or_exit(self) -> None:
@@ -399,20 +411,21 @@ class UserDataForm:
         divider(s, FOOTER_Y)
 
         if self._error:
-            # CORREZIONE: Sostituito \u26A0 con !
             center_text(s, f"! {self._error}", font_s, C_WARNING, FOOTER_Y + 15)
 
-        # CORREZIONE: Sostituito \u26A0 con !
+        
         back_exit_btn_rect = draw_button(
             s, "QUIT", font_b,
             (WINDOW_W // 2 - 130, FOOTER_Y + 75),
             secondary=True,
+            pressed=(self._clicked_btn == "back_exit")
         )
         self._rects["back_exit"] = back_exit_btn_rect
 
         confirm_btn_rect = draw_button(
             s, "CONFIRM", font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
+            pressed=(self._clicked_btn == "submit")
         )
         self._rects["submit"] = confirm_btn_rect
 
@@ -438,7 +451,7 @@ class UserDataForm:
         s.blit(title, (dlg.centerx - title.get_width() // 2, dlg_y + 28))
 
         subtitle = font_s.render(
-            "Unsaved data will be lost.", True, C_MUTED
+            "Press ENTER to quit", True, C_MUTED
         )
         s.blit(subtitle, (dlg.centerx - subtitle.get_width() // 2, dlg_y + 62))
 
@@ -449,14 +462,18 @@ class UserDataForm:
             s, "YES, QUIT", font_b,
             (dlg.centerx - 100, btn_y),
             secondary=True,
+            pressed=(self._clicked_btn == "confirm_quit_yes")
         )
         self._rects["confirm_quit_yes"] = yes_rect
 
         cancel_rect = draw_button(
             s, "CANCEL", font_b,
             (dlg.centerx + 100, btn_y),
+            pressed=(self._clicked_btn == "confirm_quit_no")
         )
         self._rects["confirm_quit_no"] = cancel_rect
 
         highlight_rect = yes_rect if self._confirm_idx == 0 else cancel_rect
         pygame.draw.rect(s, C_ACCENT, highlight_rect, 2, border_radius=8)
+
+    

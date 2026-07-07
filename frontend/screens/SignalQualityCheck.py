@@ -2,7 +2,7 @@ import pygame
 
 from config import *
 from eeg_interface import EEGInterface
-from renderer import make_fonts, center_text, divider
+from renderer import make_fonts, center_text, divider, _animate_click, draw_button
 from .utils import _handle_quit
 
 class SignalQualityCheck:
@@ -13,6 +13,8 @@ class SignalQualityCheck:
         self._fonts = make_fonts()
         self._clock = pygame.time.Clock()
         self._btn_rect = pygame.Rect(0, 0, 0, 0)
+        self._animate_click = _animate_click.__get__(self)  # Bind the method to the instance
+        self._clicked_btn = None
 
     def run(self):
         self._eeg.connect()
@@ -37,16 +39,20 @@ class SignalQualityCheck:
 
                 if ev.type == pygame.KEYDOWN:
                     if ev.key == pygame.K_RETURN:
+                        self._animate_click("confirm")
                         return "confirm"
                     # 🔴 NUOVO: Esc = torna indietro (User control and freedom)
                     elif ev.key == pygame.K_ESCAPE:
+                        self._animate_click("back")
                         return "back"
 
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     if self._btn_rect.collidepoint(ev.pos):
+                        self._animate_click("confirm")
                         return "confirm"
                     # 🔴 NUOVO: click sul pulsante "Indietro"
                     elif self._back_rect.collidepoint(ev.pos):
+                        self._animate_click("back")
                         return "back"
 
     def _draw(self, rect: pygame.Rect = None):
@@ -59,6 +65,22 @@ class SignalQualityCheck:
         # ── Header ───────────────────────────────────────────────────────────
         center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
         divider(self._screen, HEADER_Y)
+
+        # ── 🔴 FIX SICUREZZA RECT / CACHING ──────────────────────────────────
+        # Se rect viene passato, lo salviamo. Se è None (come succede durante _animate_click),
+        # usiamo l'ultimo valido registrato, oppure creiamo un fallback proporzionato alle dimensioni finestra.
+        if rect is not None:
+            self._cached_rect = rect
+        elif not hasattr(self, "_cached_rect") or self._cached_rect is None:
+            # Fallback iniziale se nessuno ha mai passato un rect prima d'ora
+            card_w = min(590, WINDOW_W - 40)
+            card_h = FOOTER_Y - HEADER_Y - 40
+            card_x = WINDOW_W // 2 - card_w // 2
+            card_y = HEADER_Y + 10
+            self._cached_rect = pygame.Rect(card_x, card_y, card_w, card_h)
+        
+        # Da qui in poi usiamo il rect garantito e non-None
+        active_rect = self._cached_rect
 
         # ── Dati EEG ─────────────────────────────────────────────────────────
         qualities = self._eeg.get_channel_quality()
@@ -74,17 +96,13 @@ class SignalQualityCheck:
             else:
                 return (227, 122, 122)   # rosso — scarso
 
-        # ── Calcolo Altezza Dinamica della Card ──────────────────────────────
-        base_h = rect.height
+        # ── Calcolo Altezza Dinamica della Card (Utilizza active_rect) ────────
+        base_h = active_rect.height
 
         padding_top = int(base_h * 0.06)
-
         padding_bottom = int(base_h * 0.06)
-
         gap_between_sections = int(base_h * 0.04)
-
         row_h = int(base_h * 0.08)
-
         avg_box_h = int(base_h * 0.18)
 
         channels_total_h = len(channels) * row_h
@@ -97,8 +115,7 @@ class SignalQualityCheck:
             padding_bottom
         )
 
-        panel = pygame.Rect(rect.x, rect.y + 10, rect.width, dynamic_card_h)
-
+        panel = pygame.Rect(active_rect.x, active_rect.y + 10, active_rect.width, dynamic_card_h)
         start_y = panel.y + padding_top
 
         # Disegno Card Principale (Flat)
@@ -128,7 +145,7 @@ class SignalQualityCheck:
             dot_y = badge_rect.centery
             pygame.draw.circle(self._screen, color, (dot_x, dot_y), 4)
 
-            # Progress bar (Flat flat!)
+            # Progress bar
             bar_x = dot_x + 14
             percent_w = 56
             bar_h = 10
@@ -153,17 +170,14 @@ class SignalQualityCheck:
         avg_panel = pygame.Rect(panel_x, avg_y, panel_w, 68)
         avg_color = status_color(avg_quality)
 
-        # Rimosso il calcolo del "tinted_bg", ora usa uno sfondo scuro flat pulito
         pygame.draw.rect(self._screen, C_INPUT_ACTIVE, avg_panel, border_radius=10)
         pygame.draw.rect(self._screen, avg_color, avg_panel, width=1, border_radius=10)
-
-        
 
         # Testi AVG
         avg_txt = font.render("TOTAL", True, C_TEXT)
         label_x = avg_panel.x + 34
         label_y = avg_y + 24
-        self._screen.blit(avg_txt, (label_x, label_y ))
+        self._screen.blit(avg_txt, (label_x, label_y))
 
         # Barra della media totale (Flat)
         avg_bar_x = label_x + 90
@@ -182,23 +196,17 @@ class SignalQualityCheck:
         avg_perc_y = avg_panel.y + (avg_panel.height - avg_perc.get_height()) // 2
         self._screen.blit(avg_perc, (avg_bar_x + avg_bar_w + 16, avg_perc_y))
 
-
-
+        # ── Divider Footer ───────────────────────────────────────────────────
         divider(self._screen, FOOTER_Y)
 
         # ── Pulsanti di navigazione ──────────────────────────────────────────
-        from renderer import draw_button
-
-        # 🔴 FIX: questa è una schermata successiva, quindi default False
-        
-
         self._back_rect = draw_button(
             s,
             "BACK",
             font_b,
             (WINDOW_W // 2 - 130, FOOTER_Y + 75),
-            padding=28,
             secondary=True,
+            pressed=(self._clicked_btn == "back")
         )
 
         self._btn_rect = draw_button(
@@ -206,5 +214,5 @@ class SignalQualityCheck:
             "CONFIRM",
             font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
-            padding=28,
+            pressed=(self._clicked_btn == "confirm")
         )

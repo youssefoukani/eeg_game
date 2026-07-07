@@ -2,7 +2,7 @@ import pygame
 from config import *
 from models import ParticipantData
 from metrics_logger import MetricsLogger
-from renderer import make_fonts, draw_button, center_text, divider
+from renderer import make_fonts, draw_button, center_text, divider, _animate_click
 from .utils import _handle_quit
 
 class ResultsScreen:
@@ -17,9 +17,13 @@ class ResultsScreen:
         self._csv_path    = csv_path
         self._fonts       = make_fonts()
         self._clock       = pygame.time.Clock()
+
+        self._animate_click = _animate_click.__get__(self)  # Bind the method to the instance
         
         self._play_count = play_count          # quante partite ha già giocato
         self._can_restart = play_count < 2      # True solo se ha giocato meno di 2 volte
+
+        self._clicked_btn = None
         
 
     def run(self) -> bool:
@@ -30,16 +34,21 @@ class ResultsScreen:
 
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:
+                    self._animate_click("quit")
                     return False
                 if ev.type == pygame.KEYDOWN:
                     if ev.key in (pygame.K_q, pygame.K_ESCAPE):
+                        self._animate_click("quit")
                         return False
                     if self._can_restart and ev.key in (pygame.K_r, pygame.K_RETURN):
+                        self._animate_click("restart")
                         return True
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
                     if self._can_restart and self._btn_restart and self._btn_restart.collidepoint(ev.pos):
+                        self._animate_click("restart")
                         return True
                     if self._btn_quit.collidepoint(ev.pos):
+                        self._animate_click("quit")
                         return False
 
     def _draw(self) -> None:
@@ -110,14 +119,15 @@ class ResultsScreen:
         if self._can_restart:
             # Due bottoni affiancati: QUIT a sinistra, RESTART a destra
             self._btn_quit = draw_button(
-                s, "Q — QUIT", font_b,
+                s, "QUIT", font_b,
                 (WINDOW_W // 2 - 130, FOOTER_Y + 75),
-                padding=28, secondary=True,
+                secondary=True,
+                pressed=(self._clicked_btn == "quit")
             )
             self._btn_restart = draw_button(
                 s, "RESTART", font_b,
                 (WINDOW_W // 2 + 130, FOOTER_Y + 75),
-                padding=28,
+                pressed=(self._clicked_btn == "restart")
             )
         else:
             # Solo QUIT, centrato, nessun RESTART disponibile
@@ -125,5 +135,6 @@ class ResultsScreen:
             self._btn_quit = draw_button(
                 s, "QUIT", font_b,
                 (WINDOW_W // 2, FOOTER_Y + 75),
-                padding=28, secondary=True,
+                secondary=True,
+                pressed=(self._clicked_btn == "quit")
             )

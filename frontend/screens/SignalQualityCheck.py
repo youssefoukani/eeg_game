@@ -1,5 +1,5 @@
 import pygame
-
+import config
 from config import *
 from eeg_interface import EEGInterface
 from renderer import make_fonts, center_text, divider, _animate_click, draw_button
@@ -54,16 +54,18 @@ class SignalQualityCheck:
                     elif self._back_rect.collidepoint(ev.pos):
                         self._animate_click("back")
                         return "back"
+                    if self._theme_rect.collidepoint(ev.pos):
+                        config.set_theme(config.THEME == config.DAY_THEME)
 
     def _draw(self, rect: pygame.Rect = None):
         font_b, font, font_s = self._fonts
         s = self._screen
 
         # ── Sfondo principale ────────────────────────────────────────────────
-        self._screen.fill(C_BG)
+        self._screen.fill(THEME["C_BG"])
 
         # ── Header ───────────────────────────────────────────────────────────
-        center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
+        center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, THEME["C_TEXT"], 40)
         divider(self._screen, HEADER_Y)
 
         # ── 🔴 FIX SICUREZZA RECT / CACHING ──────────────────────────────────
@@ -119,8 +121,8 @@ class SignalQualityCheck:
         start_y = panel.y + padding_top
 
         # Disegno Card Principale (Flat)
-        pygame.draw.rect(self._screen, C_INPUT_BG, panel, border_radius=14)
-        pygame.draw.rect(self._screen, C_INPUT_BORDER, panel, width=1, border_radius=14)
+        pygame.draw.rect(self._screen, THEME["C_INPUT_BG"], panel, border_radius=14)
+        pygame.draw.rect(self._screen, THEME["C_INPUT_BORDER"], panel, width=1, border_radius=14)
 
         panel_w = panel.width - 60
         panel_x = panel.x + 30
@@ -132,10 +134,10 @@ class SignalQualityCheck:
 
             # Badge canale (Flat)
             badge_rect = pygame.Rect(panel_x, y, 56, 24)
-            pygame.draw.rect(self._screen, (32, 35, 44), badge_rect, border_radius=6)
-            pygame.draw.rect(self._screen, (52, 56, 68), badge_rect, width=1, border_radius=6)
+            pygame.draw.rect(self._screen, THEME["C_INPUT_BG"], badge_rect, border_radius=6)
+            pygame.draw.rect(self._screen, THEME["C_INPUT_BORDER"], badge_rect, width=1, border_radius=6)
 
-            txt = font_s.render(channel, True, C_TEXT)
+            txt = font_s.render(channel, True, THEME["C_TEXT"])
             txt_x = badge_rect.x + (badge_rect.width - txt.get_width()) // 2
             txt_y = badge_rect.y + (badge_rect.height - txt.get_height()) // 2
             self._screen.blit(txt, (txt_x, txt_y))
@@ -153,7 +155,7 @@ class SignalQualityCheck:
             bar_y = y + (badge_rect.height - bar_h) // 2
 
             bg_rect = pygame.Rect(bar_x, bar_y, bar_w, bar_h)
-            pygame.draw.rect(self._screen, (35, 38, 47), bg_rect, border_radius=5)
+            pygame.draw.rect(self._screen, (120, 120, 120), bg_rect, border_radius=5)
 
             if quality > 0:
                 fill_w = max(bar_h, int(bar_w * (quality / 100)))
@@ -170,11 +172,11 @@ class SignalQualityCheck:
         avg_panel = pygame.Rect(panel_x, avg_y, panel_w, 68)
         avg_color = status_color(avg_quality)
 
-        pygame.draw.rect(self._screen, C_INPUT_ACTIVE, avg_panel, border_radius=10)
+        pygame.draw.rect(self._screen, THEME["C_INPUT_ACTIVE"], avg_panel, border_radius=10)
         pygame.draw.rect(self._screen, avg_color, avg_panel, width=1, border_radius=10)
 
         # Testi AVG
-        avg_txt = font.render("TOTAL", True, C_TEXT)
+        avg_txt = font.render("TOTAL", True, THEME["C_TEXT"])
         label_x = avg_panel.x + 34
         label_y = avg_y + 24
         self._screen.blit(avg_txt, (label_x, label_y))
@@ -215,4 +217,13 @@ class SignalQualityCheck:
             font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
             pressed=(self._clicked_btn == "confirm")
+        )
+
+        theme_label = "NIGHT THEME" if config.THEME == config.NIGHT_THEME else "DAY THEME"
+        self._theme_rect = draw_button(
+            s,
+            theme_label,
+            font_s,
+            (WINDOW_W - 140, HEADER_Y - 50),
+            secondary=True,
         )

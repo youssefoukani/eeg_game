@@ -193,14 +193,14 @@ class GameEngine:
                     obstacles.update(game_time, dt)
 
                 dash_offset += obs_speed * dt
-                self._screen.fill(C_BG)
+                self._screen.fill(THEME["C_BG"])
                 draw_scenery(self._screen, dash_offset)
                 draw_road(self._screen, dash_offset)
                 for obs in obstacles.obstacles:
                     if obs.visible:
                         draw_obstacle(self._screen, LANE_CENTERS[obs.lane], obs.y,
-                                    C_OBSTACLE_HIT if obs.hit else C_OBSTACLE)
-                draw_car(self._screen, player.x, PLAYER_Y, C_PLAYER)
+                                    THEME["C_OBSTACLE_HIT"] if obs.hit else THEME["C_OBSTACLE"])
+                draw_car(self._screen, player.x, PLAYER_Y, THEME["C_PLAYER"])
 
                 # FIX: il check va eseguito ad ogni frame (non solo a player
                 # fermo), altrimenti un ostacolo evitato durante un cambio
@@ -306,8 +306,8 @@ class GameEngine:
         center_x = ROAD_X + ROAD_W // 2
         center_y = WINDOW_H // 4 # Posizionata leggermente sopra il centro geometrico
         
-        # Colore vibrante per attirare l'attenzione del soggetto (es. il tuo C_ACCENT o Verde)
-        arrow_color = C_CUE 
+        # Colore vibrante per attirare l'attenzione del soggetto (es. il tuo THEME["C_ACCENT"] o Verde)
+        arrow_color = THEME["C_CUE"] 
         
         if direction == "LEFT":
             # Freccia verso SINISTRA potenziata e ingrandita
@@ -336,7 +336,7 @@ class GameEngine:
         pygame.draw.polygon(self._screen, (0, 0, 0), points, 3)
         pygame.draw.polygon(self._screen, arrow_color, points)
 
-        pygame.draw.polygon(self._screen, C_BG, points, 2)
+        pygame.draw.polygon(self._screen, THEME["C_BG"], points, 2)
 
         label = "LEFT" if direction == "LEFT" else "RIGHT"
         
@@ -382,12 +382,12 @@ class GameEngine:
         self._screen.blit(title_surf, title_rect)
         y += title_surf.get_height() + 34
 
-        resume_surf = self.pause_font.render("SPAZIO / ESC   -   Riprendi", True, C_OK)
+        resume_surf = self.pause_font.render("SPAZIO / ESC   -   Riprendi", True, THEME["C_OK"])
         resume_rect = resume_surf.get_rect(center=(cx, y))
         self._screen.blit(resume_surf, resume_rect)
         y += resume_surf.get_height() + 22
 
-        quit_surf = self.pause_font.render("Q   -   Abbandona partita", True, C_BORDEAUX)
+        quit_surf = self.pause_font.render("Q   -   Abbandona partita", True, THEME["C_BORDEAUX"])
         quit_rect = quit_surf.get_rect(center=(cx, y))
         self._screen.blit(quit_surf, quit_rect)
 
@@ -466,10 +466,10 @@ class GameEngine:
 
         pos_x = WINDOW_W // 2
         pos_y = WINDOW_H // 2
-        text_surface = self.label_font.render(feedback_label, True, C_TEXT)
+        text_surface = self.label_font.render(feedback_label, True, THEME["C_TEXT"])
 
         # Usa la nuova costante del colore
-        text_surface = self.label_font.render(feedback_label, True, C_BORDEAUX if feedback_label == "COLLISION!" else C_OK)
+        text_surface = self.label_font.render(feedback_label, True, THEME["C_BORDEAUX"] if feedback_label == "COLLISION!" else THEME["C_OK"])
 
         text_rect = text_surface.get_rect(center=(pos_x, pos_y))
 

@@ -43,7 +43,7 @@ def center_text(surf: pygame.Surface, text: str, font, colour, y: int, x: int = 
 
 def divider(surf: pygame.Surface, y: int, margin: int = 60) -> None:
     """Disegna una linea divisoria."""
-    pygame.draw.line(surf, C_DIVIDER, (margin, y), (WINDOW_W - margin, y), 1)
+    pygame.draw.line(surf, THEME["C_DIVIDER"], (margin, y), (WINDOW_W - margin, y), 1)
 
 
 def _clamp_colour(colour) -> tuple:
@@ -360,19 +360,19 @@ def draw_scenery(surf: pygame.Surface, scroll_offset: float) -> None:
 
 def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
     h = surf.get_height()
-    pygame.draw.rect(surf, C_ROAD, (ROAD_X, 0, ROAD_W, h))
+    pygame.draw.rect(surf, THEME["C_ROAD"], (ROAD_X, 0, ROAD_W, h))
 
     # Bordi sfumati verso il marciapiede, invece di una linea netta
     edge_w = 12
     for i in range(edge_w):
         t = i / edge_w
-        col = _clamp_colour(c - (1 - t) * 25 for c in C_LANE_DIV)
+        col = _clamp_colour(c - (1 - t) * 25 for c in THEME["C_LANE_DIV"])
         pygame.draw.line(surf, col, (ROAD_X + i, 0), (ROAD_X + i, h))
         pygame.draw.line(surf, col, (ROAD_X + ROAD_W - i, 0), (ROAD_X + ROAD_W - i, h))
 
     # Linee di carreggiata nette sopra lo sfumato
     for x in (ROAD_X, ROAD_X + ROAD_W):
-        pygame.draw.line(surf, C_LANE_DIV, (x, 0), (x, h), 2)
+        pygame.draw.line(surf, THEME["C_LANE_DIV"], (x, 0), (x, h), 2)
 
     # Linea centrale tratteggiata: rettangoli arrotondati invece di linee dure
     cx = ROAD_X + LANE_W
@@ -380,7 +380,7 @@ def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
     cycle = dash_h + gap
     y = -cycle + int(dash_offset) % cycle
     while y < h:
-        pygame.draw.rect(surf, C_LANE_DIV, pygame.Rect(cx - 1, y, 3, dash_h), border_radius=2)
+        pygame.draw.rect(surf, THEME["C_LANE_DIV"], pygame.Rect(cx - 1, y, 3, dash_h), border_radius=2)
         y += cycle
 
 
@@ -394,7 +394,7 @@ def draw_button(
     pressed: bool = False,  # Nuovo parametro per gestire il click
 ) -> pygame.Rect:
     # 1. Renderizza il testo
-    text_colour = C_WARNING if secondary else (255, 255, 255)
+    text_colour = THEME["C_WARNING"] if secondary else (255, 255, 255)
     text_surf = font.render(text, True, text_colour)
     tw, th = text_surf.get_size()
 
@@ -405,18 +405,18 @@ def draw_button(
     if secondary:
         # Se è premuto, scuriamo o schiariamo lo sfondo
         if pressed:
-            bg_colour = _clamp_colour(c + 40 for c in C_INPUT_BG)
+            bg_colour = _clamp_colour(c + 40 for c in THEME["C_INPUT_BG"])
         else:
-            bg_colour = _clamp_colour(c + 15 for c in C_INPUT_BG) if hovered else C_INPUT_BG
+            bg_colour = _clamp_colour(c + 15 for c in THEME["C_INPUT_BG"]) if hovered else THEME["C_INPUT_BG"]
             
         pygame.draw.rect(surf, bg_colour, btn_rect, border_radius=8)
-        pygame.draw.rect(surf, C_WARNING, btn_rect, 2 if pressed else 1, border_radius=8)
+        pygame.draw.rect(surf, THEME["C_WARNING"], btn_rect, 2 if pressed else 1, border_radius=8)
     else:
         # Pulsante primario: cambia colore se premuto (es. diventa più chiaro o scuro)
         if pressed:
-            colour = _clamp_colour(c - 30 for c in C_ACCENT) # Più scuro al click
+            colour = _clamp_colour(c - 30 for c in THEME["C_ACCENT"]) # Più scuro al click
         else:
-            colour = _clamp_colour(c + 25 for c in C_ACCENT) if hovered else C_ACCENT
+            colour = _clamp_colour(c + 25 for c in THEME["C_ACCENT"]) if hovered else THEME["C_ACCENT"]
             
         pygame.draw.rect(surf, colour, btn_rect, border_radius=8)
 
@@ -449,3 +449,5 @@ def _animate_click(self, btn_key: str):
         
         pygame.time.delay(210)  # Breve pausa per mostrare il feedback visivo
         self._clicked_btn = None
+
+

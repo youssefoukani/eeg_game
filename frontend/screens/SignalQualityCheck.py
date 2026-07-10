@@ -142,7 +142,7 @@ class SignalQualityCheck:
             pygame.draw.rect(self._screen, (32, 35, 44), badge_rect, border_radius=6)
             pygame.draw.rect(self._screen, (52, 56, 68), badge_rect, width=1, border_radius=6)
 
-            txt = font_s.render(channel, True, THEME["C_TEXT"])
+            txt = font_s.render(channel, True, NIGHT_THEME["C_TEXT"])
             txt_x = badge_rect.x + (badge_rect.width - txt.get_width()) // 2
             txt_y = badge_rect.y + (badge_rect.height - txt.get_height()) // 2
             self._screen.blit(txt, (txt_x, txt_y))

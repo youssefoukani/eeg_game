@@ -15,7 +15,8 @@ from pythonosc.osc_server import BlockingOSCUDPServer
 
 class EEGInterface:
 
-    CHANNELS = ["Fz", "C3", "Cz", "C4", "Pz", "PO7", "Oz", "PO8"]
+    CHANNELS = ["1", "2", "3", "4", "5", "6", "7", "8"]  # Placeholder for channel names
+    #CHANNELS = ["Fz", "C3", "Cz", "C4", "Pz", "PO7", "Oz", "PO8"]
 
     def __init__(self, ip: str = "127.0.0.1", port: int = 5005):
         self.ip   = ip

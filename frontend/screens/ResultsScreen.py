@@ -5,6 +5,8 @@ from metrics_logger import MetricsLogger
 from renderer import make_fonts, draw_button, center_text, divider, _animate_click
 from .utils import _handle_quit
 
+import config
+
 class ResultsScreen:
     """Post-session summary. ENTER / R = retry stesso livello, N = new session
     (torna a UserDataForm), Q / ESC / chiusura finestra = esce dall'app. Pulsanti anche cliccabili."""
@@ -61,14 +63,14 @@ class ResultsScreen:
         s = self._screen
         m = self._metrics
 
-        s.fill(C_BG)
+        s.fill(THEME["C_BG"])
 
         # ==========================================================
         # HEADER
         # ==========================================================
-        center_text(s, "SESSION COMPLETE", font_b, C_TEXT, 40)
+        center_text(s, "SESSION COMPLETE", font_b, THEME["C_TEXT"], 40)
         divider(s, HEADER_Y)
-
+        from renderer import draw_button
         # ==========================================================
         # RESULTS CARD
         # ==========================================================
@@ -79,35 +81,42 @@ class ResultsScreen:
 
         card = pygame.Rect(card_x, card_y, card_w, card_h)
 
-        pygame.draw.rect(s, C_INPUT_BG, card, border_radius=10)
-        pygame.draw.rect(s, C_INPUT_BORDER, card, 1, border_radius=10)
+        pygame.draw.rect(s, THEME["C_INPUT_BG"], card, border_radius=10)
+        pygame.draw.rect(s, THEME["C_INPUT_BORDER"], card, 1, border_radius=10)
 
         y = card.y + 18
-        s.blit(font.render("Summary", True, C_ACCENT), (card.x + 20, y))
+        s.blit(font.render("Summary", True, THEME["C_ACCENT"]), (card.x + 20, y))
         y += 38
 
         success_rate = m.avoidances / (m.collisions + m.avoidances) if (m.collisions + m.avoidances) > 0 else 0
 
         rows = [
-            ("Participant", self._participant.user_id, C_TEXT),
-            ("Total obstacles", str(m.collisions + m.avoidances), C_TEXT),
-            ("Collisions", str(m.collisions), C_WARNING),
-            ("Successful avoids", str(m.avoidances), C_ACCENT),
-            ("Lane changes", str(m.lane_changes), C_TEXT),
-            ("Success Rate", f"{success_rate:.2%}", C_ACCENT),
+            ("Participant", self._participant.user_id, THEME["C_TEXT"]),
+            ("Total obstacles", str(m.collisions + m.avoidances), THEME["C_TEXT"]),
+            ("Collisions", str(m.collisions), THEME["C_WARNING"]),
+            ("Successful avoids", str(m.avoidances), THEME["C_ACCENT"]),
+            ("Lane changes", str(m.lane_changes), THEME["C_TEXT"]),
+            ("Success Rate", f"{success_rate:.2%}", THEME["C_ACCENT"]),
         ]
 
         for label, value, color in rows:
-            s.blit(font_s.render(label, True, C_MUTED), (card.x + 30, y))
+            s.blit(font_s.render(label, True, THEME["C_MUTED"]), (card.x + 30, y))
             value_surface = font_s.render(value, True, color)
             s.blit(value_surface, (card.right - 30 - value_surface.get_width(), y))
             y += 30
 
         y += 8
-        pygame.draw.line(s, C_INPUT_BORDER, (card.x + 20, y), (card.right - 20, y), 1)
+        pygame.draw.line(s, THEME["C_INPUT_BORDER"], (card.x + 20, y), (card.right - 20, y), 1)
         y += 16
 
-        
+        theme_label = "NIGHT THEME" if config.THEME == config.NIGHT_THEME else "DAY THEME"
+        self._theme_rect = draw_button(
+            s,
+            theme_label,
+            font_s,
+            (WINDOW_W - 140, HEADER_Y - 50),
+            secondary=True,
+        )
         
 
         # ==========================================================
@@ -115,7 +124,7 @@ class ResultsScreen:
         # ==========================================================
         divider(s, FOOTER_Y)
 
-        from renderer import draw_button
+        
 
         # NEW SESSION a sinistra, secondario/rosso (come BACK/QUIT: esce da
         # questo partecipante e torna all'inizio del flusso). RETRY a destra,

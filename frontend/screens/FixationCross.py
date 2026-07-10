@@ -22,7 +22,7 @@ class FixationCross:
             for ev in pygame.event.get():
                 _handle_quit(ev)
             
-            self._screen.fill(C_BG)
+            self._screen.fill(THEME["C_BG"])
             
             # Croce bianca
             cross = self._big.render("+", True, (255, 255, 255))

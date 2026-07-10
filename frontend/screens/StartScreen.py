@@ -1,10 +1,10 @@
 import pygame
 
-import config
 from config import *
 from models import ParticipantData
 
-from renderer import make_fonts, center_text, divider, draw_step_indicator, _animate_click
+from renderer import make_fonts, center_text, divider, draw_step_indicator, draw_theme_toggle, _animate_click
+from config import toggle_theme
 from .utils import _handle_quit
 
 class StartScreen:
@@ -17,7 +17,7 @@ class StartScreen:
         self._clock       = pygame.time.Clock()
         self._btn_rect    = pygame.Rect(0, 0, 0, 0)
         self._clicked_btn = None
-
+        self._theme_toggle_rect = pygame.Rect(0, 0, 0, 0)
 
         self._animate_click = _animate_click.__get__(self)  # Bind the method to the instance
 
@@ -43,14 +43,15 @@ class StartScreen:
                     
                 # 2. Gestione del mouse (Click sinistro sul pulsante)
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                    if self._theme_toggle_rect.collidepoint(ev.pos):
+                        toggle_theme()
+                        continue
                     if self._btn_rect.collidepoint(ev.pos):
                         self._animate_click("confirm")
                         return "confirm"
                     elif self._back_rect.collidepoint(ev.pos):
                         self._animate_click("back")
                         return "back"
-                    if self._theme_rect.collidepoint(ev.pos):
-                        config.set_theme(config.THEME == config.DAY_THEME)
 
     def _draw(self) -> None:
 
@@ -60,6 +61,8 @@ class StartScreen:
 
         s.fill(THEME["C_BG"])
 
+        self._theme_toggle_rect = draw_theme_toggle(s)
+
         # ==========================================================
 
         # HEADER
@@ -68,11 +71,7 @@ class StartScreen:
 
         center_text(s, "EEG BCI RUNNER", font_b, THEME["C_TEXT"], 40)
 
-        from renderer import draw_button
-
-       
-
-        draw_step_indicator(s, 4, 4, font)
+        draw_step_indicator(s, 4, 4, font_s)
 
         divider(s, HEADER_Y)
 
@@ -262,18 +261,9 @@ class StartScreen:
 
         # ==========================================================
 
-        
+        from renderer import draw_button
         divider(self._screen, FOOTER_Y )
     
-
-        theme_label = "NIGHT THEME" if config.THEME == config.NIGHT_THEME else "DAY THEME"
-        self._theme_rect = draw_button(
-            s,
-            theme_label,
-            font_s,
-            (WINDOW_W - 140, HEADER_Y - 50),
-            secondary=True,
-        )
 
         self._back_rect = draw_button(
             s,

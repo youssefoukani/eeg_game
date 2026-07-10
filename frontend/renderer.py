@@ -384,6 +384,50 @@ def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
         y += cycle
 
 
+def draw_theme_toggle(surf: pygame.Surface, margin: int = 24, radius: int = 16) -> pygame.Rect:
+    """Disegna, in alto a destra, la piccola icona sole/luna per il cambio tema.
+    Mostra l'icona del tema di DESTINAZIONE (sole se ora è notte → click per
+    passare al chiaro; luna se ora è giorno → click per passare allo scuro),
+    convenzione comune nei toggle di tema. Legge il tema attivo da
+    is_dark_theme(), quindi è sempre coerente anche subito dopo un click.
+    Ritorna il pygame.Rect cliccabile (leggermente più grande dell'icona,
+    per un'area di tocco comoda)."""
+    from config import is_dark_theme
+
+    cx = WINDOW_W - margin - radius
+    cy = margin + radius
+    hit_rect = pygame.Rect(0, 0, radius * 2 + 16, radius * 2 + 16)
+    hit_rect.center = (cx, cy)
+
+    # Chip di sfondo, per contrasto e area di click ben visibile
+    pygame.draw.circle(surf, THEME["C_INPUT_BG"], (cx, cy), radius + 6)
+    pygame.draw.circle(surf, THEME["C_INPUT_BORDER"], (cx, cy), radius + 6, 1)
+
+    if is_dark_theme():
+        # Tema attivo: notte → mostra SOLE (click per passare al chiaro)
+        sun_colour = (250, 190, 80)
+        pygame.draw.circle(surf, sun_colour, (cx, cy), radius * 0.5)
+        for i in range(8):
+            angle = i * (math.pi / 4)
+            x1 = cx + math.cos(angle) * radius * 0.72
+            y1 = cy + math.sin(angle) * radius * 0.72
+            x2 = cx + math.cos(angle) * radius * 0.98
+            y2 = cy + math.sin(angle) * radius * 0.98
+            pygame.draw.line(surf, sun_colour, (x1, y1), (x2, y2), 2)
+    else:
+        # Tema attivo: giorno → mostra LUNA (click per passare allo scuro)
+        moon_colour = (90, 100, 130)
+        moon_surf = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        pygame.draw.circle(moon_surf, moon_colour, (radius, radius), radius * 0.85)
+        # "morde" un cerchio spostato sottraendone l'alpha, per creare la forma a falce
+        bite = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        pygame.draw.circle(bite, (0, 0, 0, 255), (int(radius * 1.35), int(radius * 0.8)), radius * 0.72)
+        moon_surf.blit(bite, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+        surf.blit(moon_surf, (cx - radius, cy - radius))
+
+    return hit_rect
+
+
 def draw_step_indicator(
     surf: pygame.Surface,
     current: int,
@@ -406,22 +450,21 @@ def draw_step_indicator(
     # linea di collegamento (disegnata per prima, sotto i pallini)
     for i in range(total - 1):
         x1, x2 = centers[i], centers[i + 1]
-        line_colour = C_ACCENT if (i + 1) < current else C_INPUT_BORDER
+        line_colour = THEME["C_ACCENT"] if (i + 1) < current else THEME["C_INPUT_BORDER"]
         pygame.draw.line(surf, line_colour, (x1 + dot_r, y), (x2 - dot_r, y), 2)
 
     for i, cx in enumerate(centers):
         step_num = i + 1
         done = step_num < current
         active = step_num == current
-        rect = pygame.Rect(cx - dot_r, y - dot_r, dot_r * 2, dot_r * 2)
 
         if done or active:
-            pygame.draw.circle(surf, C_ACCENT, (cx, y), dot_r)
+            pygame.draw.circle(surf, THEME["C_ACCENT"], (cx, y), dot_r)
             text_colour = (255, 255, 255)
         else:
-            pygame.draw.circle(surf, C_INPUT_BG, (cx, y), dot_r)
-            pygame.draw.circle(surf, C_INPUT_BORDER, (cx, y), dot_r, 2)
-            text_colour = C_MUTED
+            pygame.draw.circle(surf, THEME["C_INPUT_BG"], (cx, y), dot_r)
+            pygame.draw.circle(surf, THEME["C_INPUT_BORDER"], (cx, y), dot_r, 2)
+            text_colour = THEME["C_MUTED"]
 
         num_surf = font.render(str(step_num), True, text_colour)
         surf.blit(num_surf, (cx - num_surf.get_width() // 2, y - num_surf.get_height() // 2))

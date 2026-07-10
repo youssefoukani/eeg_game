@@ -137,8 +137,104 @@ NIGHT_THEME = {
 
 THEME = NIGHT_THEME.copy()
 
+# ── Esposizione dei colori come variabili di modulo ─────────────────────────
+# ATTENZIONE — snapshot congelato, NON live: queste variabili vengono copiate
+# per valore da ogni file che fa `from config import *`, quindi restano
+# ferme al tema in vigore al momento dell'import e NON seguono set_theme()/
+# toggle_theme() chiamati a runtime. Sono qui solo per compatibilità con
+# eventuali file non ancora convertiti al lookup live THEME["C_X"] (usato
+# invece da renderer.py e da tutte le schermate principali per supportare
+# il cambio tema a caldo). Se aggiungi un nuovo file che disegna colori,
+# usa THEME["C_X"], non queste variabili.
+C_BG           = THEME["C_BG"]
+C_BG_PANEL     = THEME["C_BG_PANEL"]
+C_ROAD         = THEME["C_ROAD"]
+C_LANE_DIV     = THEME["C_LANE_DIV"]
+C_PLAYER       = THEME["C_PLAYER"]
+C_OBSTACLE     = THEME["C_OBSTACLE"]
+C_OBSTACLE_HIT = THEME["C_OBSTACLE_HIT"]
+C_OK           = THEME["C_OK"]
+C_WARNING      = THEME["C_WARNING"]
+C_HUD_BG       = THEME["C_HUD_BG"]
+C_DIVIDER      = THEME["C_DIVIDER"]
+C_TEXT         = THEME["C_TEXT"]
+C_MUTED        = THEME["C_MUTED"]
+C_FAINT        = THEME["C_FAINT"]
+C_ACCENT       = THEME["C_ACCENT"]
+C_ACCENT_DIM   = THEME["C_ACCENT_DIM"]
+C_ACCENT_GLOW  = THEME["C_ACCENT_GLOW"]
+C_INPUT_BG     = THEME["C_INPUT_BG"]
+C_INPUT_ACTIVE = THEME["C_INPUT_ACTIVE"]
+C_INPUT_BORDER = THEME["C_INPUT_BORDER"]
+C_INPUT_SEL    = THEME["C_INPUT_SEL"]
+C_SUCCESS      = THEME["C_SUCCESS"]
+C_PENDING      = THEME["C_PENDING"]
+C_CUE          = THEME["C_CUE"]
+C_BORDEAUX     = THEME["C_BORDEAUX"]
+
+# Rete di sicurezza per eventuali chiavi future aggiunte a THEME e non ancora
+# elencate sopra a mano: le rende comunque disponibili come C_QUALCOSA.
+# (Queste, se nuove, resterebbero invisibili a Pylance finché non vengono
+# aggiunte anche come riga esplicita qui sopra — è un compromesso accettabile.)
+globals().update(THEME)
+
 def set_theme(dark):
 
     THEME.clear()
 
     THEME.update(NIGHT_THEME if dark else DAY_THEME)
+
+    # Riallinea sia le assegnazioni esplicite sia la rete di sicurezza.
+    # ATTENZIONE: i file che hanno già fatto `from config import *` prima
+    # di questa chiamata hanno copiato i vecchi valori per valore e NON
+    # si aggiornano da soli — set_theme() va quindi chiamato prima di
+    # importare/istanziare le schermate, non a metà sessione.
+    global C_BG, C_BG_PANEL, C_ROAD, C_LANE_DIV, C_PLAYER, C_OBSTACLE, \
+        C_OBSTACLE_HIT, C_OK, C_WARNING, C_HUD_BG, C_DIVIDER, C_TEXT, \
+        C_MUTED, C_FAINT, C_ACCENT, C_ACCENT_DIM, C_ACCENT_GLOW, C_INPUT_BG, \
+        C_INPUT_ACTIVE, C_INPUT_BORDER, C_INPUT_SEL, C_SUCCESS, C_PENDING, \
+        C_CUE, C_BORDEAUX
+
+    C_BG           = THEME["C_BG"]
+    C_BG_PANEL     = THEME["C_BG_PANEL"]
+    C_ROAD         = THEME["C_ROAD"]
+    C_LANE_DIV     = THEME["C_LANE_DIV"]
+    C_PLAYER       = THEME["C_PLAYER"]
+    C_OBSTACLE     = THEME["C_OBSTACLE"]
+    C_OBSTACLE_HIT = THEME["C_OBSTACLE_HIT"]
+    C_OK           = THEME["C_OK"]
+    C_WARNING      = THEME["C_WARNING"]
+    C_HUD_BG       = THEME["C_HUD_BG"]
+    C_DIVIDER      = THEME["C_DIVIDER"]
+    C_TEXT         = THEME["C_TEXT"]
+    C_MUTED        = THEME["C_MUTED"]
+    C_FAINT        = THEME["C_FAINT"]
+    C_ACCENT       = THEME["C_ACCENT"]
+    C_ACCENT_DIM   = THEME["C_ACCENT_DIM"]
+    C_ACCENT_GLOW  = THEME["C_ACCENT_GLOW"]
+    C_INPUT_BG     = THEME["C_INPUT_BG"]
+    C_INPUT_ACTIVE = THEME["C_INPUT_ACTIVE"]
+    C_INPUT_BORDER = THEME["C_INPUT_BORDER"]
+    C_INPUT_SEL    = THEME["C_INPUT_SEL"]
+    C_SUCCESS      = THEME["C_SUCCESS"]
+    C_PENDING      = THEME["C_PENDING"]
+    C_CUE          = THEME["C_CUE"]
+    C_BORDEAUX     = THEME["C_BORDEAUX"]
+
+    globals().update(THEME)
+
+
+def is_dark_theme() -> bool:
+    """True se il tema attivo è quello notturno. Va sempre chiamata (mai
+    salvata in una variabile locale a lungo termine): legge THEME["C_BG"]
+    al momento della chiamata e lo confronta con NIGHT_THEME, quindi resta
+    corretta anche subito dopo un toggle_theme()."""
+    return THEME.get("C_BG") == NIGHT_THEME["C_BG"]
+
+
+def toggle_theme() -> None:
+    """Alterna chiaro/scuro. Muta THEME in place tramite set_theme(), quindi
+    ogni schermata che legge i colori con THEME["C_X"] (invece delle
+    variabili piatte C_X) vede il cambiamento all'istante, senza dover
+    ricaricare né riavviare nulla."""
+    set_theme(dark=not is_dark_theme())

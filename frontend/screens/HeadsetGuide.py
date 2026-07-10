@@ -1,8 +1,8 @@
 import pygame
 
-import config
 from config import *
-from renderer import make_fonts, divider, center_text, round_image, draw_step_indicator, _animate_click
+from renderer import make_fonts, divider, center_text, round_image, draw_step_indicator, draw_theme_toggle, _animate_click
+from config import toggle_theme
 
 from .utils import _handle_quit
 
@@ -27,6 +27,7 @@ class HeadsetGuide:
 
         self._animate_click = _animate_click.__get__(self)  # Bind the method to the instance
         self._clicked_btn = None
+        self._theme_toggle_rect = pygame.Rect(0, 0, 0, 0)
     def _load_panels(self) -> list:
         import os
         panels = []
@@ -59,24 +60,25 @@ class HeadsetGuide:
                         return "back"
 
                 elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                    if self._theme_toggle_rect.collidepoint(ev.pos):
+                        toggle_theme()
+                        continue
                     if self._btn_rect.collidepoint(ev.pos):
                         self._animate_click("confirm")
                         return "confirm"
                     elif self._back_rect.collidepoint(ev.pos):
                         self._animate_click("back")
                         return "back"
-                    if self._theme_rect.collidepoint(ev.pos):
-
-                        config.set_theme(config.THEME == config.DAY_THEME)
 
     def _draw(self) -> None:
         font_b, font, font_s = self._fonts
         s = self._screen
-        s.fill(config.THEME["C_BG"])
+        s.fill(THEME["C_BG"])
+        self._theme_toggle_rect = draw_theme_toggle(s)
 
         # ── 1. HEADER (Divider Superiore) ─────────────────────────────────────
-        center_text(s, "HEADSET FITTING GUIDE", font_b, C_TEXT, 38)
-        draw_step_indicator(s, 2, 4, font)
+        center_text(s, "HEADSET FITTING GUIDE", font_b, THEME["C_TEXT"], 38)
+        draw_step_indicator(s, 2, 4, font_s)
         divider(s, HEADER_Y)
 
         # ── 2. FOOTER (Divider Inferiore e Bottone) ────────────────────────────
@@ -103,15 +105,6 @@ class HeadsetGuide:
             font_b,
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
             pressed=(self._clicked_btn == "confirm")
-        )
-
-        theme_label = "NIGHT THEME" if config.THEME == config.NIGHT_THEME else "DAY THEME"
-        self._theme_rect = draw_button(
-            s,
-            theme_label,
-            font_s,
-            (WINDOW_W - 140, HEADER_Y - 50),
-            secondary=True,
         )
 
         # ── 3. AREA IMMAGINI (Centrata e con angoli smussati) ──────────────────
@@ -167,4 +160,3 @@ class HeadsetGuide:
             img_y = space_y_top + (img_area_h - surf.get_height()) // 2
             s.blit(surf, (x, img_y))
             x += surf.get_width() + IMG_GAP
-    

@@ -2,11 +2,11 @@ import time
 import pygame
 import sys
 
-import config
 from config import *
 from models import ParticipantData
 from .utils import _handle_quit
-from renderer import make_fonts, center_text, divider, draw_button, draw_step_indicator, _animate_click
+from renderer import make_fonts, center_text, divider, draw_button, draw_step_indicator, draw_theme_toggle, _animate_click
+from config import toggle_theme
 
 
 class UserDataForm:
@@ -32,8 +32,6 @@ class UserDataForm:
     # Field index constants for clarity
     _F_UID, _F_AGE, _F_SEX, _F_HAND, _F_EDU = 0, 1, 2, 3, 4
 
-    
-
     def __init__(self, screen: pygame.Surface):
         self._screen  = screen
         self._fonts   = make_fonts()
@@ -53,8 +51,7 @@ class UserDataForm:
         self._rects: dict = {}   # key → pygame.Rect
 
         self._clicked_btn = None
-
-        self.dark=True
+        self._theme_toggle_rect = pygame.Rect(0, 0, 0, 0)
 
     # ── input ──────────────────────────────────────────────────────────────────
 
@@ -76,14 +73,14 @@ class UserDataForm:
                         return done
                         
                 elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                    if self._theme_toggle_rect.collidepoint(ev.pos):
+                        toggle_theme()
+                        continue
                     done = self._handle_click(ev.pos)
                     if done == "QUIT_FORM":
                         return None  # Uscita pulita dal form
                     elif done:
                         return done
-                    elif self._theme_rect.collidepoint(ev.pos):     # <-- nuovo
-                        set_theme(dark=not self.dark)          # <-- toggle
-                        self.dark = not self.dark
 
     # ── input ──────────────────────────────────────────────────────────────────
 
@@ -237,11 +234,13 @@ class UserDataForm:
         font_b, font, font_s = self._fonts
         s = self._screen
 
-        s.fill(config.THEME["C_BG"])
+        s.fill(THEME["C_BG"])
+
+        self._theme_toggle_rect = draw_theme_toggle(s)
 
         # HEADER
-        center_text(s, "PARTICIPANT REGISTRATION", font_b, C_TEXT, 38)
-        draw_step_indicator(s, 1, 4, font)
+        center_text(s, "PARTICIPANT REGISTRATION", font_b, THEME["C_TEXT"], 38)
+        draw_step_indicator(s, 1, 4, font_s)
         divider(s, HEADER_Y)
 
         # LAYOUT CONSTANTS
@@ -277,8 +276,8 @@ class UserDataForm:
 
         card = pygame.Rect(card_x, card_y, card_w, card_h)
 
-        pygame.draw.rect(s, config.THEME["C_INPUT_BG"], card, border_radius=10)
-        pygame.draw.rect(s, config.THEME["C_INPUT_BORDER"], card, 1, border_radius=10)
+        pygame.draw.rect(s, THEME["C_INPUT_BG"], card, border_radius=10)
+        pygame.draw.rect(s, THEME["C_INPUT_BORDER"], card, 1, border_radius=10)
 
         field_w = card_w - 60
         field_x = card_x + 30
@@ -298,7 +297,7 @@ class UserDataForm:
             lbl = font_s.render(
                 labels[key],
                 True,
-                config.THEME["C_ACCENT"] if active else config.THEME["C_TEXT"]
+                THEME["C_ACCENT"] if active else THEME["C_TEXT"]
             )
 
             s.blit(lbl, (field_x, y))
@@ -309,14 +308,14 @@ class UserDataForm:
 
             pygame.draw.rect(
                 s,
-                config.THEME["C_INPUT_ACTIVE"] if active else config.THEME["C_INPUT_BG"],
+                THEME["C_INPUT_ACTIVE"] if active else THEME["C_INPUT_BG"],
                 box,
                 border_radius=6
             )
 
             pygame.draw.rect(
                 s,
-                config.THEME["C_ACCENT"] if active else config.THEME["C_INPUT_BORDER"],
+                THEME["C_ACCENT"] if active else THEME["C_INPUT_BORDER"],
                 box,
                 3 if active else 1,
                 border_radius=6
@@ -327,7 +326,7 @@ class UserDataForm:
             txt = font.render(
                 self._texts[key] + cursor,
                 True,
-                config.THEME["C_TEXT"]
+                THEME["C_TEXT"]
             )
 
             s.blit(txt, (box.x + 12, box.y + max(box_h - txt.get_height(), 0) // 2))
@@ -351,16 +350,16 @@ class UserDataForm:
                 selected = i == sel_idx
 
                 bg = (
-                    config.THEME["C_INPUT_SEL"]
+                    THEME["C_INPUT_SEL"]
                     if selected
-                    else (config.THEME["C_INPUT_ACTIVE"] if active else config.THEME["C_INPUT_BG"])
+                    else (THEME["C_INPUT_ACTIVE"] if active else THEME["C_INPUT_BG"])
                 )
 
                 pygame.draw.rect(s, bg, rect, border_radius=6)
 
                 pygame.draw.rect(
                     s,
-                    config.THEME["C_ACCENT"] if active else config.THEME["C_INPUT_BORDER"],
+                    THEME["C_ACCENT"] if active else THEME["C_INPUT_BORDER"],
                     rect,
                     3 if selected else 1,
                     border_radius=6
@@ -372,7 +371,7 @@ class UserDataForm:
                 ts = font_s.render(
                     label_text,
                     True,
-                    config.THEME["C_TEXT"] if selected else config.THEME["C_MUTED"]
+                    THEME["C_TEXT"] if selected else THEME["C_MUTED"]
                 )
 
                 s.blit(
@@ -390,7 +389,7 @@ class UserDataForm:
         # SEX
         active = self._focus == self._F_SEX
         s.blit(
-            font_s.render("Sex", True, config.THEME["C_ACCENT"] if active else config.THEME["C_TEXT"]),
+            font_s.render("Sex", True, THEME["C_ACCENT"] if active else THEME["C_TEXT"]),
             (field_x, y)
         )
         y += int(SEL_LABEL_GAP * scale)
@@ -400,7 +399,7 @@ class UserDataForm:
         # HAND
         active = self._focus == self._F_HAND
         s.blit(
-            font_s.render("Dominant Hand", True, config.THEME["C_ACCENT"] if active else config.THEME["C_TEXT"]),
+            font_s.render("Dominant Hand", True, THEME["C_ACCENT"] if active else THEME["C_TEXT"]),
             (field_x, y)
         )
         y += int((SEL_LABEL_GAP - 2) * scale)
@@ -410,7 +409,7 @@ class UserDataForm:
         # EDUCATION
         active = self._focus == self._F_EDU
         s.blit(
-            font_s.render("Educational Level", True, config.THEME["C_ACCENT"] if active else config.THEME["C_TEXT"]),
+            font_s.render("Educational Level", True, THEME["C_ACCENT"] if active else THEME["C_TEXT"]),
             (field_x, y)
         )
         y += int((SEL_LABEL_GAP - 2) * scale)
@@ -420,7 +419,7 @@ class UserDataForm:
         divider(s, FOOTER_Y)
 
         if self._error:
-            center_text(s, f"! {self._error}", font_s, config.THEME["C_WARNING"], FOOTER_Y + 15)
+            center_text(s, f"! {self._error}", font_s, THEME["C_WARNING"], FOOTER_Y + 15)
 
         
         back_exit_btn_rect = draw_button(
@@ -438,15 +437,6 @@ class UserDataForm:
         )
         self._rects["submit"] = confirm_btn_rect
 
-        theme_label = "NIGHT THEME" if config.THEME == config.NIGHT_THEME else "DAY THEME"
-        self._theme_rect = draw_button(
-            s,
-            theme_label,
-            font_s,
-            (WINDOW_W - 140, HEADER_Y - 50),
-            secondary=True,
-        )
-
         if self._confirm_quit:
             self._draw_confirm_quit_popup(font_b, font, font_s)
 
@@ -462,14 +452,14 @@ class UserDataForm:
         dlg_y = WINDOW_H // 2 - dlg_h // 2
         dlg = pygame.Rect(dlg_x, dlg_y, dlg_w, dlg_h)
 
-        pygame.draw.rect(s, config.THEME["C_INPUT_BG"], dlg, border_radius=12)
-        pygame.draw.rect(s, config.THEME["C_INPUT_BORDER"], dlg, 1, border_radius=12)
+        pygame.draw.rect(s, THEME["C_INPUT_BG"], dlg, border_radius=12)
+        pygame.draw.rect(s, THEME["C_INPUT_BORDER"], dlg, 1, border_radius=12)
 
-        title = font.render("Are you sure you want to quit?", True, config.THEME["C_TEXT"])
+        title = font.render("Are you sure you want to quit?", True, THEME["C_TEXT"])
         s.blit(title, (dlg.centerx - title.get_width() // 2, dlg_y + 28))
 
         subtitle = font_s.render(
-            "Press ENTER to quit", True, config.THEME["C_MUTED"]
+            "Press ENTER to quit", True, THEME["C_MUTED"]
         )
         s.blit(subtitle, (dlg.centerx - subtitle.get_width() // 2, dlg_y + 62))
 
@@ -492,4 +482,4 @@ class UserDataForm:
         self._rects["confirm_quit_no"] = cancel_rect
 
         highlight_rect = yes_rect if self._confirm_idx == 0 else cancel_rect
-        pygame.draw.rect(s, C_ACCENT, highlight_rect, 2, border_radius=8)
+        pygame.draw.rect(s, THEME["C_ACCENT"], highlight_rect, 2, border_radius=8)

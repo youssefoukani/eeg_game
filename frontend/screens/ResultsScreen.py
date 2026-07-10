@@ -2,10 +2,9 @@ import pygame
 from config import *
 from models import ParticipantData
 from metrics_logger import MetricsLogger
-from renderer import make_fonts, draw_button, center_text, divider, _animate_click
+from renderer import make_fonts, draw_button, center_text, divider, draw_theme_toggle, _animate_click
+from config import toggle_theme
 from .utils import _handle_quit
-
-import config
 
 class ResultsScreen:
     """Post-session summary. ENTER / R = retry stesso livello, N = new session
@@ -26,6 +25,7 @@ class ResultsScreen:
         self._clicked_btn = None
         self._btn_retry = pygame.Rect(0, 0, 0, 0)
         self._btn_new_session = pygame.Rect(0, 0, 0, 0)
+        self._theme_toggle_rect = pygame.Rect(0, 0, 0, 0)
 
     def run(self):
         """Ritorna 'retry' (rigioca subito lo stesso livello, stesso partecipante),
@@ -51,6 +51,9 @@ class ResultsScreen:
                         self._animate_click("new_session")
                         return "new_session"
                 if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                    if self._theme_toggle_rect.collidepoint(ev.pos):
+                        toggle_theme()
+                        continue
                     if self._btn_retry.collidepoint(ev.pos):
                         self._animate_click("retry")
                         return "retry"
@@ -65,12 +68,14 @@ class ResultsScreen:
 
         s.fill(THEME["C_BG"])
 
+        self._theme_toggle_rect = draw_theme_toggle(s)
+
         # ==========================================================
         # HEADER
         # ==========================================================
         center_text(s, "SESSION COMPLETE", font_b, THEME["C_TEXT"], 40)
         divider(s, HEADER_Y)
-        from renderer import draw_button
+
         # ==========================================================
         # RESULTS CARD
         # ==========================================================
@@ -109,14 +114,7 @@ class ResultsScreen:
         pygame.draw.line(s, THEME["C_INPUT_BORDER"], (card.x + 20, y), (card.right - 20, y), 1)
         y += 16
 
-        theme_label = "NIGHT THEME" if config.THEME == config.NIGHT_THEME else "DAY THEME"
-        self._theme_rect = draw_button(
-            s,
-            theme_label,
-            font_s,
-            (WINDOW_W - 140, HEADER_Y - 50),
-            secondary=True,
-        )
+        
         
 
         # ==========================================================
@@ -124,7 +122,7 @@ class ResultsScreen:
         # ==========================================================
         divider(s, FOOTER_Y)
 
-        
+        from renderer import draw_button
 
         # NEW SESSION a sinistra, secondario/rosso (come BACK/QUIT: esce da
         # questo partecipante e torna all'inizio del flusso). RETRY a destra,

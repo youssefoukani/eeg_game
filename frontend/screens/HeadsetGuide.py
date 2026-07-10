@@ -1,7 +1,7 @@
 import pygame
 
 from config import *
-from renderer import make_fonts, divider, center_text, round_image, _animate_click
+from renderer import make_fonts, divider, center_text, round_image, draw_step_indicator, _animate_click
 
 from .utils import _handle_quit
 
@@ -71,8 +71,9 @@ class HeadsetGuide:
         s.fill(C_BG)
 
         # ── 1. HEADER (Divider Superiore) ─────────────────────────────────────
-        divider(s, HEADER_Y)
         center_text(s, "HEADSET FITTING GUIDE", font_b, C_TEXT, 38)
+        draw_step_indicator(s, 2, 4, font)
+        divider(s, HEADER_Y)
 
         # ── 2. FOOTER (Divider Inferiore e Bottone) ────────────────────────────
         center_pos = (WINDOW_W // 2, FOOTER_Y+75)

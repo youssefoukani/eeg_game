@@ -2,7 +2,7 @@ import pygame
 
 from config import *
 from eeg_interface import EEGInterface
-from renderer import make_fonts, center_text, divider, _animate_click, draw_button
+from renderer import make_fonts, center_text, divider, _animate_click, draw_button, draw_step_indicator
 from .utils import _handle_quit
 
 class SignalQualityCheck:
@@ -64,6 +64,7 @@ class SignalQualityCheck:
 
         # ── Header ───────────────────────────────────────────────────────────
         center_text(self._screen, "SIGNAL QUALITY CHECK", font_b, C_TEXT, 40)
+        draw_step_indicator(self._screen, 3, 4, font)
         divider(self._screen, HEADER_Y)
 
         # ── 🔴 FIX SICUREZZA RECT / CACHING ──────────────────────────────────

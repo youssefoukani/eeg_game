@@ -14,15 +14,15 @@ from screens import ResultsScreen
 from renderer import center_text
 
 class GameEngine:
-    """Runs one session. Returns True if the user requests a restart."""
+    """Runs one level. Returns 'retry', 'new_session', 'quit_to_menu', or False
+    (chiusura completa dell'app), a seconda della scelta dell'utente in ResultsScreen
+    o durante la partita."""
 
-    def __init__(self, screen: pygame.Surface, participant: ParticipantData, seed: int = None, eeg: EEGInterface = None, play_count=1, max_plays=2):
+    def __init__(self, screen: pygame.Surface, participant: ParticipantData, seed: int = None, eeg: EEGInterface = None):
         self._screen      = screen
         self._participant = participant
         self._eeg         = eeg or EEGInterface()
         self._seed = seed
-        self._play_count = play_count
-        self._max_plays = max_plays
 
         self._fonts       = make_fonts()
         self.label_font = pygame.font.SysFont("Montserrat", 72, bold=True)
@@ -299,7 +299,7 @@ class GameEngine:
                     "all_participants_data.csv", 
                 )
                 metrics.print_report()
-                return ResultsScreen(self._screen, metrics, self._participant, csv_path, self._play_count).run()
+                return ResultsScreen(self._screen, metrics, self._participant, csv_path).run()
     # ─── 3. FUNZIONE DI DISEGNO DELLA FRECCIA ───
     def draw_cue_arrow(self, direction: str) -> None:
         """Disegna una freccia geometrica o testuale al centro dello schermo."""

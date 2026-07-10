@@ -5,7 +5,7 @@ import sys
 from config import *
 from models import ParticipantData
 from .utils import _handle_quit
-from renderer import make_fonts, center_text, divider, draw_button, _animate_click
+from renderer import make_fonts, center_text, divider, draw_button, draw_step_indicator, _animate_click
 
 
 class UserDataForm:
@@ -233,6 +233,7 @@ class UserDataForm:
 
         # HEADER
         center_text(s, "PARTICIPANT REGISTRATION", font_b, C_TEXT, 38)
+        draw_step_indicator(s, 1, 4, font)
         divider(s, HEADER_Y)
 
         # LAYOUT CONSTANTS
@@ -475,5 +476,3 @@ class UserDataForm:
 
         highlight_rect = yes_rect if self._confirm_idx == 0 else cancel_rect
         pygame.draw.rect(s, C_ACCENT, highlight_rect, 2, border_radius=8)
-
-    

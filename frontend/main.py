@@ -65,48 +65,27 @@ def main() -> None:
                 else:
                     step += 1
 
-        # FASE 2: Partite
-        MAX_PLAYS = 2
-        play_count = 0
-        quit_to_menu = False
-
-        while play_count < MAX_PLAYS:
-            if play_count == 1:
-                seed = 12
-            else:
-                seed = 42  # seconda partita → seed fisso
-
-            engine = GameEngine(
-                screen,
-                state["participant"],
-                eeg=eeg,
-                seed=seed,
-                play_count=play_count + 1,   # 1 = prima partita, 2 = seconda
-                max_plays=MAX_PLAYS,
-            )
-
+        # FASE 2: Partita — un livello per volta, con scelta libera a fine sessione
+        while True:
+            engine = GameEngine(screen, state["participant"], eeg=eeg)
             result = engine.run()
 
-            # Gestione dell'esito della partita
-            if result == "quit_to_menu":
-                quit_to_menu = True
-                break  # Interrompe le partite correnti
-            elif result is False:
-                # Se il giocatore ha cliccato la X rossa per chiudere la finestra
+            if result is False:
+                # Chiusura finestra o uscita esplicita (Q/ESC su ResultsScreen)
                 pygame.quit()
                 sys.exit()
 
-            play_count += 1
+            if result == "retry":
+                # Rigioca subito lo stesso livello, stesso partecipante
+                continue
 
-        # Se l'utente ha abbandonato con 'Q', il ciclo while True ricomincia dall'inizio
-        if quit_to_menu:
-            continue
+            # "new_session" (pulsante in ResultsScreen) oppure "quit_to_menu"
+            # (abbandono manuale dal menu di pausa in partita): in entrambi i
+            # casi si torna al menu principale, che riparte da UserDataForm.
+            break
 
-        # Se tutte le partite sono state completate normalmente, usciamo
-        break
-
-    pygame.quit()
-    sys.exit()
+        # Il ciclo esterno riparte sempre da capo per il prossimo partecipante
+        continue
 
 
 if __name__ == "__main__":

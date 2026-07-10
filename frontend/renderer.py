@@ -384,6 +384,49 @@ def draw_road(surf: pygame.Surface, dash_offset: float) -> None:
         y += cycle
 
 
+def draw_step_indicator(
+    surf: pygame.Surface,
+    current: int,
+    total: int,
+    font,
+    y: int = 90,
+    dot_r: int = 13,
+    spacing: int = 150,
+) -> None:
+    """Disegna un indicatore a pallini numerati collegati da una linea, centrato
+    orizzontalmente sotto il titolo. `current` è 1-based: i pallini fino a `current`
+    (incluso) sono pieni/attivi, i successivi restano vuoti."""
+    if total <= 0:
+        return
+
+    total_w = spacing * (total - 1)
+    start_x = WINDOW_W // 2 - total_w // 2
+    centers = [start_x + i * spacing for i in range(total)]
+
+    # linea di collegamento (disegnata per prima, sotto i pallini)
+    for i in range(total - 1):
+        x1, x2 = centers[i], centers[i + 1]
+        line_colour = C_ACCENT if (i + 1) < current else C_INPUT_BORDER
+        pygame.draw.line(surf, line_colour, (x1 + dot_r, y), (x2 - dot_r, y), 2)
+
+    for i, cx in enumerate(centers):
+        step_num = i + 1
+        done = step_num < current
+        active = step_num == current
+        rect = pygame.Rect(cx - dot_r, y - dot_r, dot_r * 2, dot_r * 2)
+
+        if done or active:
+            pygame.draw.circle(surf, C_ACCENT, (cx, y), dot_r)
+            text_colour = (255, 255, 255)
+        else:
+            pygame.draw.circle(surf, C_INPUT_BG, (cx, y), dot_r)
+            pygame.draw.circle(surf, C_INPUT_BORDER, (cx, y), dot_r, 2)
+            text_colour = C_MUTED
+
+        num_surf = font.render(str(step_num), True, text_colour)
+        surf.blit(num_surf, (cx - num_surf.get_width() // 2, y - num_surf.get_height() // 2))
+
+
 def draw_button(
     surf: pygame.Surface,
     text: str,
@@ -398,8 +441,11 @@ def draw_button(
     text_surf = font.render(text, True, text_colour)
     tw, th = text_surf.get_size()
 
-    # 2. Rettangolo fisso (150x70) centrato
-    btn_rect = pygame.Rect(0, 0, 150, 70)
+    # 2. Rettangolo centrato: larghezza minima 150, ma si allarga se il testo
+    #    (es. "NEW SESSION") non ci starebbe, per evitare che trabocchi
+    PAD_X = 28
+    btn_w = max(150, tw + PAD_X * 2)
+    btn_rect = pygame.Rect(0, 0, btn_w, 70)
     btn_rect.center = pos_center
 
     if secondary:

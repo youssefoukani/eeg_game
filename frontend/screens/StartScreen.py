@@ -3,7 +3,7 @@ import pygame
 from config import *
 from models import ParticipantData
 
-from renderer import make_fonts, center_text, divider, _animate_click
+from renderer import make_fonts, center_text, divider, draw_step_indicator, _animate_click
 from .utils import _handle_quit
 
 class StartScreen:
@@ -63,6 +63,8 @@ class StartScreen:
         # ==========================================================
 
         center_text(s, "EEG BCI RUNNER", font_b, C_TEXT, 40)
+
+        draw_step_indicator(s, 4, 4, font)
 
         divider(s, HEADER_Y)
 
@@ -272,5 +274,3 @@ class StartScreen:
             (WINDOW_W // 2 + 130, FOOTER_Y + 75),
             pressed=(self._clicked_btn == "confirm")
         )
-
-    

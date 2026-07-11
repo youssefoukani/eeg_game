@@ -9,14 +9,13 @@ from models import Obstacle
 class PlayerController:
     def __init__(self):
         self.lane = LANE_LEFT
-        # La posizione attuale (quella che disegni)
-        self.x = float(LANE_CENTERS[LANE_LEFT])
-        # La posizione di destinazione
-        self.target_x = float(LANE_CENTERS[LANE_LEFT])
-        # Velocità di spostamento (regola questo valore per la fluidità)
-     
-        self.normal_smoothness = 0.2
-        self.collisione_smoothness = 0.05  # Velocità di ripiazzamento in caso di collisione
+
+        
+        self.x = float(LANE_CENTERS[LANE_LEFT]) # La posizione attuale
+        self.target_x = float(LANE_CENTERS[LANE_LEFT]) # La posizione di destinazione
+        
+        self.normal_smoothness = 0.2 # Velocità di spostamento
+        self.collisione_smoothness = 0.05 # Velocità di ripiazzamento in caso di collisione
 
 
     @property
@@ -35,7 +34,7 @@ class PlayerController:
         self.smoothness = self.collisione_smoothness  # Riduci la fluidità per un riposizionamento più rapido
         
     def apply_command(self, cmd: Optional[str]) -> bool:
-        """Imposta solo la destinazione, non la posizione immediata."""
+        # Imposta solo la destinazione, non la posizione immediata
         target_lane = {"LEFT": LANE_LEFT, "RIGHT": LANE_RIGHT}.get(cmd)
         
         if target_lane is not None and target_lane != self.lane:
@@ -44,7 +43,7 @@ class PlayerController:
         return False
 
     def update(self):
-        """Da chiamare in ogni frame del gioco."""
+         #Da chiamare in ogni frame del gioco.
         # Se siamo lontani dal target, ci avviciniamo gradualmente
         if abs(self.x - self.target_x) > 0.1:
             # Interpolazione lineare: ci spostiamo di una percentuale della distanza
@@ -107,14 +106,14 @@ class CollisionSystem:
             if obs.hit:
                 continue
                 
-            # Definiamo i confini dell'ostacolo (fissi nella sua corsia)
+            # Definiamo i confini dell'ostacolo
             obs_cx = float(LANE_CENTERS[obs.lane])
             o_left   = obs_cx - OBS_W // 2
             o_right  = obs_cx + OBS_W // 2
             o_top    = obs.y - OBS_H // 2
             o_bottom = obs.y + OBS_H // 2
             
-            # Controllo collisione rettangolare (AABB collision)
+            # Controllo collisione rettangolare
             if (p_left < o_right and p_right > o_left and
                 p_top < o_bottom and p_bottom > o_top):
                 

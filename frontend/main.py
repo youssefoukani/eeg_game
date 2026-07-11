@@ -13,7 +13,7 @@ def main() -> None:
 
     eeg = EEGInterface()
 
-    # Ciclo principale dell'applicazione (permette di tornare al menu)
+    # Ciclo principale dell'applicazione
     while True:
         # Stato condiviso tra le schermate ripristinato ad ogni avvio
         state = {
@@ -31,7 +31,6 @@ def main() -> None:
                 form = UserDataForm(screen)
                 result = form.run()
                 if result == "back":
-                    # Se chiudi l'app nella primissima schermata, esce completamente
                     pygame.quit()
                     sys.exit()
                 state["participant"] = result
@@ -65,7 +64,7 @@ def main() -> None:
                 else:
                     step += 1
 
-        # FASE 2: Partita — un livello per volta, con scelta libera a fine sessione
+        # FASE 2: Partita
         while True:
             engine = GameEngine(screen, state["participant"], eeg=eeg)
             result = engine.run()
@@ -79,8 +78,7 @@ def main() -> None:
                 # Rigioca subito lo stesso livello, stesso partecipante
                 continue
 
-            # "new_session" (pulsante in ResultsScreen) oppure "quit_to_menu"
-            # (abbandono manuale dal menu di pausa in partita): in entrambi i
+            # "new_session" (pulsante in ResultsScreen) oppure "quit_to_menu": in entrambi i
             # casi si torna al menu principale, che riparte da UserDataForm.
             break
 

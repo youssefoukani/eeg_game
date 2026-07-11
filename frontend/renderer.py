@@ -5,8 +5,7 @@ import math
 
 
 def make_fonts() -> tuple:
-    """Return (font_bold, font, font_small) tuple using standard system fonts."""
-    # Arial è molto più leggibile su monitor rispetto al monospace
+    #Return (font_bold, font, font_small) tuple using standard system fonts.
     return (
         pygame.font.SysFont("arial", 25, bold=True),
         pygame.font.SysFont("arial", 18),
@@ -15,7 +14,7 @@ def make_fonts() -> tuple:
 
 
 def render_shadow_text(surf: pygame.Surface, text: str, font, colour, pos, shadow_colour=(0, 0, 0)):
-    """Utility per disegnare testo con un'ombra per migliorare il contrasto."""
+    #Utility per disegnare testo con un'ombra per migliorare il contrasto.
     shadow = font.render(text, True, shadow_colour)
     surf.blit(shadow, (pos[0] + 1, pos[1] + 1))
     s = font.render(text, True, colour)
@@ -24,7 +23,7 @@ def render_shadow_text(surf: pygame.Surface, text: str, font, colour, pos, shado
 
 
 def render_outline_text(surf: pygame.Surface, text: str, font, colour, pos, outline_colour=(0, 0, 0)):
-    """Testo con outline a 4 direzioni: più leggibile su sfondi vari rispetto alla sola ombra."""
+    #Testo con outline a 4 direzioni: più leggibile su sfondi vari rispetto alla sola ombra.
     x, y = pos
     outline = font.render(text, True, outline_colour)
     for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
@@ -42,7 +41,7 @@ def center_text(surf: pygame.Surface, text: str, font, colour, y: int, x: int = 
 
 
 def divider(surf: pygame.Surface, y: int, margin: int = 60) -> None:
-    """Disegna una linea divisoria."""
+    #Disegna una linea divisoria.
     pygame.draw.line(surf, THEME["C_DIVIDER"], (margin, y), (WINDOW_W - margin, y), 1)
 
 
@@ -53,19 +52,18 @@ def _clamp_colour(colour) -> tuple:
 def draw_car(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> None:
     r = pygame.Rect(cx - CAR_W // 2, cy - CAR_H // 2, CAR_W, CAR_H)
 
-    # --- Ombra morbida con alpha reale (richiede una surface dedicata con SRCALPHA) ---
+    # Ombra morbida con alpha reale (richiede una surface dedicata con SRCALPHA) ---
     pad = 6
     shadow_surf = pygame.Surface((CAR_W + pad * 2, CAR_H + pad * 2), pygame.SRCALPHA)
     pygame.draw.rect(
         shadow_surf, (0, 0, 0, 70),
         pygame.Rect(pad, pad, CAR_W, CAR_H), border_radius=8
     )
-    # leggero blur "povero" tramite scalatura down/up, costa pochissimo ed è efficace
+    # leggero blur "povero" tramite scalatura down/up
     small = pygame.transform.smoothscale(shadow_surf, (max(1, (CAR_W + pad * 2) // 3), max(1, (CAR_H + pad * 2) // 3)))
     shadow_surf = pygame.transform.smoothscale(small, (CAR_W + pad * 2, CAR_H + pad * 2))
     surf.blit(shadow_surf, (r.x - pad + 3, r.y - pad + 5))
 
-    # --- Corpo principale con gradiente verticale (chiaro in alto, scuro in basso) ---
     body_surf = pygame.Surface((CAR_W, CAR_H), pygame.SRCALPHA)
     for i in range(CAR_H):
         t = i / CAR_H
@@ -237,7 +235,7 @@ def draw_obstacle(surf: pygame.Surface, cx: float, cy: float, colour: tuple) -> 
 def _pseudo_random(seed: int) -> float:
     """Numero deterministico in [0, 1) a partire da un intero. Usato per variare leggermente
     forma/colore di ogni albero senza che cambi ad ogni frame (deve restare stabile nel tempo,
-    altrimenti la decorazione 'tremola' mentre scorre)."""
+    altrimenti la decorazione 'trema' mentre scorre)."""
     seed = (seed * 9301 + 49297) % 233280
     return seed / 233280.0
 
@@ -287,7 +285,7 @@ def _draw_tree(surf: pygame.Surface, x: float, y: float, scale: float = 1.0, see
 
 
 def _draw_bush(surf: pygame.Surface, x: float, y: float, scale: float = 1.0, seed: int = 0) -> None:
-    """Cespuglio: cluster di ellissi verdi sovrapposte invece di una singola forma piatta."""
+    #Cespuglio: cluster di ellissi verdi sovrapposte invece di una singola forma piatta.
     rnd = _pseudo_random(seed + 7)
 
     shadow_surf = pygame.Surface((int(44 * scale), int(12 * scale)), pygame.SRCALPHA)

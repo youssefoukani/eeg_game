@@ -233,16 +233,6 @@ class GameEngine:
                     if obs.hit:
                         continue
 
-                    # FIX: l'esito (evitato o no) va dedotto da obs.hit, che
-                    # è impostato in modo affidabile dal check continuo
-                    # durante tutta la finestra di sovrapposizione verticale
-                    # con la x reale del player. Confrontare obs.lane con
-                    # player.lane SOLO nell'istante di rimozione è scorretto:
-                    # se il player torna nella corsia dell'ostacolo dopo
-                    # averlo già schivato (ma prima che venga rimosso), le
-                    # corsie risultano uguali anche se non c'è mai stata
-                    # sovrapposizione reale, e il "GOOD!" non scattava più.
-                    # Se siamo arrivati qui, obs.hit è False: è stato evitato.
                     metrics.log_avoidance(game_time, player.lane, obs)
 
                     self.feedback_text = "GOOD!"

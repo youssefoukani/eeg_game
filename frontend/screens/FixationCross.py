@@ -12,7 +12,6 @@ class FixationCross:
     def __init__(self, screen: pygame.Surface):
         self._screen = screen
         self._clock  = pygame.time.Clock()
-        # Usiamo font più leggibili e spessi
         self._big    = pygame.font.SysFont("arial", 80, bold=True)
         self._hint   = pygame.font.SysFont("arial", 18, bold=True)
 

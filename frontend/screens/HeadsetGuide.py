@@ -136,7 +136,7 @@ class HeadsetGuide:
             scale  = min(panel_w / ow, available_h / oh)
             scale = min(panel_w / ow, available_h / oh)
 
-            # piccolo padding interno uniforme (non arbitrario)
+            # piccolo padding interno uniforme
 
             INNER_SCALE = 0.95
 
@@ -144,7 +144,7 @@ class HeadsetGuide:
             
             # 1. Ridimensiona l'immagine
             img_scaled = pygame.transform.smoothscale(surf, (nw, nh))
-            # 2. Applica gli angoli smussati (es. raggio 12px)
+            # 2. Applica gli angoli smussati
             img_rounded = round_image(img_scaled, radius=12)
             
             scaled_panels.append(img_rounded)

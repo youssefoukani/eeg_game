@@ -2,7 +2,6 @@ import numpy as np
 
 def eval_quality(normalized_snapshot):
     """
-
     snapshot: matrice (250, 8)
 
     ritorna: lista di 8 valori normalizzati tra 50 e 100

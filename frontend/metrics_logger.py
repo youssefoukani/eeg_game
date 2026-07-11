@@ -68,7 +68,7 @@ class MetricsLogger:
                 f"obs{i}_avoidance_time"
             ])
         
-        # Apri il file in modalità "append" ('a') per non sovrascrivere
+        # Apre il file in modalità "append" ('a') per non sovrascrivere
         with open(path, "a", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             
@@ -77,7 +77,6 @@ class MetricsLogger:
                 w.writerow(header)
                 
             # Scrive un'unica riga con le metriche globali del partecipante
-            # (Assicurati che self.collisions, self.avoidances e esistano dentro l'oggetto metrics)
 
             row = [
                 participant.user_id,

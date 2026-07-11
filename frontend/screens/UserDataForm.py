@@ -184,14 +184,13 @@ class UserDataForm:
                     if not uid or not age.isdigit() or not (1 <= int(age) <= 120):
                         return self._validate() # Mostra l'errore standard direttamente
                     
-                    self._animate_click("submit") # <--- ANIMAZIONE
+                    self._animate_click("submit")
                     return self._validate()
                 elif key == "back_exit":
-                    self._animate_click("back_exit") # <--- ANIMAZIONE
+                    self._animate_click("back_exit")
                     self._handle_back_or_exit()
                 break
         return None
-    # ── back / exit ──────────────────────────────────────────────────────────────
 
     def _handle_back_or_exit(self) -> None:
         is_first_screen = getattr(self, "_is_first_screen", True)
@@ -211,7 +210,6 @@ class UserDataForm:
     def _cancel_quit(self) -> None:
         self._confirm_quit = False
 
-    # ── validation ─────────────────────────────────────────────────────────────
 
     def _validate(self):
         uid = self._texts["user_id"].strip()

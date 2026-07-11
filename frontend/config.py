@@ -53,18 +53,18 @@ HEADER_Y = int(WINDOW_H * 0.1)
 
 
 DAY_THEME = {
-    "C_BG":            (220, 230, 242),   # Azzurro polvere/pastello (morbido, non stanca gli occhi)
-    "C_BG_PANEL":      (248, 249, 252),   # Bianco sporco freddo per le card
+    "C_BG":            (220, 230, 242),   # Azzurro pastello
+    "C_BG_PANEL":      (248, 249, 252),   # Bianco freddo per le card
     "C_ROAD":          (74, 80, 92),      # Grigio asfalto scuro bilanciato
     "C_LANE_DIV":      (235, 240, 245),   # Linee di corsia chiare e nitide
     "C_PLAYER":        (255, 255, 255),   # Bianco puro per far risaltare il giocatore
-    "C_OBSTACLE":      (225, 85, 85),     # Rosso corallo moderno (meno aggressivo del puro)
+    "C_OBSTACLE":      (225, 85, 85),     # Rosso corallo moderno
     "C_OBSTACLE_HIT":  (245, 130, 130),   # Rosso chiaro per l'impatto
     "C_OK":            (46, 184, 114),    # Verde smeraldo per gli stati OK
     "C_WARNING":       (225, 95, 80),     # Arancio-rosso di avviso
     "C_HUD_BG":        (240, 244, 248),   # Sfondo HUD leggermente azzurrato per coerenza
     "C_DIVIDER":       (195, 205, 215),   # Linee di divisione pulite e desaturate
-    "C_TEXT":          (40, 48, 64),      # Blu notte scurissimo (sostituisce il nero puro, molto più moderno)
+    "C_TEXT":          (40, 48, 64),      # Blu notte scurissimo
     "C_MUTED":         (100, 112, 132),   # Grigio-blu medio per testi secondari
     "C_FAINT":         (160, 172, 190),   # Grigio chiaro per dettagli sottili
     "C_ACCENT":        (54, 134, 232),    # Blu elettrico brillante per bottoni e focus
@@ -77,7 +77,7 @@ DAY_THEME = {
     "C_SUCCESS":       (46, 184, 114),    # Verde successo coordinato
     "C_PENDING":       (242, 160, 60),    # Giallo ambra caldo
     "C_CUE":           (30, 190, 120),    # Indicatore EEG visibile ma pulito
-    "C_BORDEAUX":      (150, 40, 75),     # Bordeaux leggermente più morbido
+    "C_BORDEAUX":      (150, 40, 75),    
 }
 
 
@@ -144,8 +144,8 @@ THEME = NIGHT_THEME.copy()
 # toggle_theme() chiamati a runtime. Sono qui solo per compatibilità con
 # eventuali file non ancora convertiti al lookup live THEME["C_X"] (usato
 # invece da renderer.py e da tutte le schermate principali per supportare
-# il cambio tema a caldo). Se aggiungi un nuovo file che disegna colori,
-# usa THEME["C_X"], non queste variabili.
+# il cambio tema a caldo).
+
 C_BG           = THEME["C_BG"]
 C_BG_PANEL     = THEME["C_BG_PANEL"]
 C_ROAD         = THEME["C_ROAD"]
@@ -172,10 +172,6 @@ C_PENDING      = THEME["C_PENDING"]
 C_CUE          = THEME["C_CUE"]
 C_BORDEAUX     = THEME["C_BORDEAUX"]
 
-# Rete di sicurezza per eventuali chiavi future aggiunte a THEME e non ancora
-# elencate sopra a mano: le rende comunque disponibili come C_QUALCOSA.
-# (Queste, se nuove, resterebbero invisibili a Pylance finché non vengono
-# aggiunte anche come riga esplicita qui sopra — è un compromesso accettabile.)
 globals().update(THEME)
 
 def set_theme(dark):

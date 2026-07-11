@@ -43,7 +43,6 @@ class SignalQualityCheck:
                     if ev.key == pygame.K_RETURN:
                         self._animate_click("confirm")
                         return "confirm"
-                    # 🔴 NUOVO: Esc = torna indietro (User control and freedom)
                     elif ev.key == pygame.K_ESCAPE:
                         self._animate_click("back")
                         return "back"
@@ -55,7 +54,6 @@ class SignalQualityCheck:
                     if self._btn_rect.collidepoint(ev.pos):
                         self._animate_click("confirm")
                         return "confirm"
-                    # 🔴 NUOVO: click sul pulsante "Indietro"
                     elif self._back_rect.collidepoint(ev.pos):
                         self._animate_click("back")
                         return "back"
@@ -73,9 +71,6 @@ class SignalQualityCheck:
         draw_step_indicator(self._screen, 3, 4, font_s)
         divider(self._screen, HEADER_Y)
 
-        # ── 🔴 FIX SICUREZZA RECT / CACHING ──────────────────────────────────
-        # Se rect viene passato, lo salviamo. Se è None (come succede durante _animate_click),
-        # usiamo l'ultimo valido registrato, oppure creiamo un fallback proporzionato alle dimensioni finestra.
         if rect is not None:
             self._cached_rect = rect
         elif not hasattr(self, "_cached_rect") or self._cached_rect is None:
@@ -97,13 +92,13 @@ class SignalQualityCheck:
         # ── Palette di stato (Colori Flat Moderni) ───────────────────────────
         def status_color(q):
             if q >= 80:
-                return (94, 211, 153)    # verde  — buono
+                return (94, 211, 153)    # verde
             elif q >= 50:
-                return (235, 186, 99)    # giallo — accettabile
+                return (235, 186, 99)    # giallo
             else:
-                return (227, 122, 122)   # rosso — scarso
+                return (227, 122, 122)   # rosso
 
-        # ── Calcolo Altezza Dinamica della Card (Utilizza active_rect) ────────
+        # ── Calcolo Altezza Dinamica della Card ────────
         base_h = active_rect.height
 
         padding_top = int(base_h * 0.06)

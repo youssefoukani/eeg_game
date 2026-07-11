@@ -10,12 +10,12 @@ class EEGDataBuffer:
         self.lock = threading.RLock()
 
     def add_sample(self, sample):
-        """Aggiunge un campione (lista di 8 valori) al buffer."""
+        #Aggiunge un campione (lista di 8 valori) al buffer.
         with self.lock:
             self.buffer.append(sample)
 
     def get_snapshot(self):
-        """Restituisce una copia del buffer come matrice (window_size x 8)."""
+        #Restituisce una copia del buffer come matrice (window_size x 8).
         with self.lock:
             # Verifica che il buffer sia pieno
             if not self.is_ready():
@@ -25,6 +25,6 @@ class EEGDataBuffer:
             return np.array(list(self.buffer))
 
     def is_ready(self):
-            """Controlla se il buffer è pieno e pronto per la classificazione."""
+            #Controlla se il buffer è pieno e pronto per la classificazione.
             with self.lock:
                 return len(self.buffer) == self.window_size

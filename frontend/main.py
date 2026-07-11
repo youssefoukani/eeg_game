@@ -75,11 +75,13 @@ def main() -> None:
                 sys.exit()
 
             if result == "retry":
-                # Rigioca subito lo stesso livello, stesso partecipante
+                # Prima di rigiocare, ripropone la fixation cross
+                fx_result = FixationCross(screen).run()
+                if fx_result == "back":
+                    break
+                # Rigioca lo stesso livello, stesso partecipante, dopo la fixation cross
                 continue
 
-            # "new_session" (pulsante in ResultsScreen) oppure "quit_to_menu": in entrambi i
-            # casi si torna al menu principale, che riparte da UserDataForm.
             break
 
         # Il ciclo esterno riparte sempre da capo per il prossimo partecipante

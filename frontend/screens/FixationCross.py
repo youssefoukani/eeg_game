@@ -24,7 +24,7 @@ class FixationCross:
             self._screen.fill(THEME["C_BG"])
             
             # Croce bianca
-            cross = self._big.render("+", True, (255, 255, 255))
+            cross = self._big.render("+", True, (0, 0, 0))
             hint = self._hint.render("FIXATION — RELAX AND FOCUS", True, (150, 150, 150))
             
             # Calcolo posizioni centrato

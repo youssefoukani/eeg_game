@@ -8,8 +8,8 @@ WINDOW_H   = _info.current_h
 FPS        = 60
 
 # Session
-MATCH_DURATION   = 15   # seconds
-CROSS_DURATION   = 2.0   # seconds
+MATCH_DURATION   = 60   # seconds
+CROSS_DURATION   = 5.0   # seconds
 
 # Lanes
 LANE_LEFT  = 0
